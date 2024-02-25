@@ -407,7 +407,7 @@ class RFM69(RFMSPI):
         sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
         # according to datasheet.
         sync_word = bytearray(sync_word_length)
-        self._read_into(_REG_SYNC_VALUE1, sync_word)
+        seld.read_into(_REG_SYNC_VALUE1, sync_word)
         return sync_word
 
     @sync_word.setter
@@ -419,7 +419,7 @@ class RFM69(RFMSPI):
             # Check sync word is at most 8 bytes.
             assert 1 <= len(val) <= 8
             # Update the value, size and turn on the sync word.
-            self._write_from(_REG_SYNC_VALUE1, val)
+            self.write_from(_REG_SYNC_VALUE1, val)
             self.sync_size = len(val) - 1  # Again sync word size is offset by
             # 1 according to datasheet.
             self.sync_on = 1
@@ -480,7 +480,7 @@ class RFM69(RFMSPI):
             return None
         # Encryption is enabled so read the key and return it.
         key = bytearray(16)
-        self._read_into(_REG_AES_KEY1, key)
+        seld.read_into(_REG_AES_KEY1, key)
         return key
 
     @encryption_key.setter
@@ -491,7 +491,7 @@ class RFM69(RFMSPI):
         else:
             # Set the encryption key and enable encryption.
             assert len(val) == 16
-            self._write_from(_REG_AES_KEY1, val)
+            self.write_from(_REG_AES_KEY1, val)
             self.aes_on = 1
 
     @property
@@ -657,7 +657,7 @@ class RFM69(RFMSPI):
             payload[4] = flags
         payload = payload + data
         # Write payload to transmit fifo
-        self._write_from(_REG_FIFO, payload)
+        self.write_from(_REG_FIFO, payload)
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for packet sent interrupt with explicit polling (not ideal but
@@ -753,7 +753,7 @@ class RFM69(RFMSPI):
             # RadioHead header and at least one byte of data --reject this packet and ignore it.
             if fifo_length > 0:  # read and clear the FIFO if anything in it
                 packet = bytearray(fifo_length)
-                self._read_into(_REG_FIFO, packet, fifo_length)
+                seld.read_into(_REG_FIFO, packet, fifo_length)
 
             if fifo_length < 5:
                 packet = None

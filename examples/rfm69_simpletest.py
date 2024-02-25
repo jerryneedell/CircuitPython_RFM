@@ -60,11 +60,9 @@ while True:
     # If no packet was received during the timeout then None is returned.
     if packet is None:
         # Packet has not been received
-        LED.value = False
         print("Received nothing! Listening again...")
     else:
         # Received a packet!
-        LED.value = True
         # Print out the raw bytes of the packet:
         print("Received (raw bytes): {0}".format(packet))
         # And decode to ASCII text and print it too.  Note that you always
