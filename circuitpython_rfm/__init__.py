@@ -36,4 +36,8 @@ Implementation Notes
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
+import sys
+sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
+
+from circuitpython_rfm.rfm_common import ticks_diff
 
