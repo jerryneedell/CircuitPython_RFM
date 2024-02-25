@@ -19,6 +19,8 @@ from micropython import const
 sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
 
 from circuitpython_rfm.rfm_common import RFMSPI
+from circuitpython_rfm.rfm_common import ticks_diff
+from circuitpython_rfm.rfm_common import check_timeout
 
 
 HAS_SUPERVISOR = False
@@ -561,17 +563,19 @@ class RFM9x(RFMSPI):
                 self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
-    def tx_done(self) -> bool:
-        """Transmit status"""
-        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
-
-    def rx_done(self) -> bool:
-        """Receive status"""
-        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
-
     def crc_error(self) -> bool:
         """crc status"""
         return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
+
+
+    def packet_sent(self) -> bool:
+        """Transmit status"""
+        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
+
+    def payload_ready(self) -> bool:
+        """Receive status"""
+        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+
 
     # pylint: disable=too-many-branches
     def send(
@@ -634,17 +638,7 @@ class RFM9x(RFMSPI):
         self.transmit()
         # Wait for tx done interrupt with explicit polling (not ideal but
         # best that can be done right now without interrupts).
-        timed_out = False
-        if HAS_SUPERVISOR:
-            start = supervisor.ticks_ms()
-            while not timed_out and not self.tx_done():
-                if ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
-                    timed_out = True
-        else:
-            start = time.monotonic()
-            while not timed_out and not self.tx_done():
-                if time.monotonic() - start >= self.xmit_timeout:
-                    timed_out = True
+        timed_out = check_timeout(self.packet_sent, self.xmit_timeout)
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
@@ -724,17 +718,7 @@ class RFM9x(RFMSPI):
             # interrupt supports.
             # Make sure we are listening for packets.
             self.listen()
-            timed_out = False
-            if HAS_SUPERVISOR:
-                start = supervisor.ticks_ms()
-                while not timed_out and not self.rx_done():
-                    if ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000:
-                        timed_out = True
-            else:
-                start = time.monotonic()
-                while not timed_out and not self.rx_done():
-                    if time.monotonic() - start >= timeout:
-                        timed_out = True
+            timed_out = check_timeout(self.payload_ready, timeout)
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading

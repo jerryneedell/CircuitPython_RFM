@@ -10,7 +10,7 @@
 import time
 
 try:
-    from typing import Optional, Type, Union, Tuple, List, Any, ByteString
+    from typing import Callable, Optional, Type, Union, Tuple, List, Any, ByteString
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
     import digitalio
     import busio
@@ -47,6 +47,24 @@ def ticks_diff(ticks1: int, ticks2: int) -> int:
     diff = (ticks1 - ticks2) & _TICKS_MAX
     diff = ((diff + _TICKS_HALFPERIOD) & _TICKS_MAX) - _TICKS_HALFPERIOD
     return diff
+
+
+def check_timeout(flag: Callable, limit: float) -> bool:
+    """test for timeout waiting for specified flag"""
+    timed_out = False
+    if HAS_SUPERVISOR:
+        start = supervisor.ticks_ms()
+        while not timed_out and not flag():
+            if ticks_diff(supervisor.ticks_ms(), start) >= limit * 1000:
+                timed_out = True
+    else:
+        start = time.monotonic()
+        while not timed_out and not flag():
+            if time.monotonic() - start >= limit:
+                timed_out = True
+    return timed_out
+
+
 
 
 class RFM:  # pylint: disable-msg=no-member

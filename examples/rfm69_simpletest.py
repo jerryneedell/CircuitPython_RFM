@@ -1,12 +1,8 @@
 # SPDX-FileCopyrightText: 2024 Ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-# Simple demo of sending and recieving data with the RFM95 LoRa radio.
+# Simple demo of sending and recieving data with the RFM69 LoRa radio.
 # Author: Jerry Needell
-
-# Simple example to send a message and then wait indefinitely for messages
-# to be received.  This uses the default RadioHead compatible GFSK_Rb250_Fd250
-# modulation and packet format for the radio.
 import board
 import busio
 import digitalio
@@ -15,28 +11,24 @@ sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
 
 from circuitpython_rfm import rfm69
 
+
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
 # module! Can be a value like 915.0, 433.0, etc.
 
 # Define pins connected to the chip, use these if wiring up the breakout according to the guide:
-CS = digitalio.DigitalInOut(board.D5)
-RESET = digitalio.DigitalInOut(board.D6)
-# Or uncomment and instead use these if using a Feather M0 RFM69 board
-# and the appropriate CircuitPython build:
-# CS = digitalio.DigitalInOut(board.RFM69_CS)
-# RESET = digitalio.DigitalInOut(board.RFM69_RST)
-
-# Define the onboard LED
-LED = digitalio.DigitalInOut(board.D13)
-LED.direction = digitalio.Direction.OUTPUT
+CS = digitalio.DigitalInOut(board.CE1)
+RESET = digitalio.DigitalInOut(board.D25)
+# Or uncomment and instead use these if using a Feather M0 RFM9x board and the appropriate
+# CircuitPython build:
+# CS = digitalio.DigitalInOut(board.RFM9X_CS)
+# RESET = digitalio.DigitalInOut(board.RFM9X_RST)
 
 # Initialize SPI bus.
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
 rfm69 = rfm69.RFM69(spi, CS, RESET, RADIO_FREQ_MHZ)
-
 # Optionally set an encryption key (16 byte AES key). MUST match both
 # on the transmitter and receiver (or be set to None to disable/the default).
 rfm69.encryption_key = (

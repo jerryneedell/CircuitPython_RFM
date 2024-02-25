@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2017 Tony DiCola for Adafruit Industries
+# SPDX-FileCopyrightText: 2024 Jerry Needell for Adafruit Industries
 #
 # SPDX-License-Identifier: MIT
 
@@ -17,60 +17,44 @@ receiving of packets with RFM69 series radios (433/915Mhz).
     receiving a 60 byte packet at a time--don't try to receive many kilobytes of data at a time!
 
 * Author(s): Tony DiCola, Jerry Needell
-
-Implementation Notes
---------------------
-
-**Hardware:**
-
-* Adafruit `RFM69HCW Transceiver Radio Breakout - 868 or 915 MHz - RadioFruit
-  <https://www.adafruit.com/product/3070>`_ (Product ID: 3070)
-
-* Adafruit `RFM69HCW Transceiver Radio Breakout - 433 MHz - RadioFruit
-  <https://www.adafruit.com/product/3071>`_ (Product ID: 3071)
-
-* Adafruit `Feather M0 RFM69HCW Packet Radio - 868 or 915 MHz - RadioFruit
-  <https://www.adafruit.com/product/3176>`_ (Product ID: 3176)
-
-* Adafruit `Feather M0 RFM69HCW Packet Radio - 433 MHz - RadioFruit
-  <https://www.adafruit.com/product/3177>`_ (Product ID: 3177)
-
-* Adafruit `Radio FeatherWing - RFM69HCW 900MHz - RadioFruit
-  <https://www.adafruit.com/product/3229>`_ (Product ID: 3229)
-
-* Adafruit `Radio FeatherWing - RFM69HCW 433MHz - RadioFruit
-  <https://www.adafruit.com/product/3230>`_ (Product ID: 3230)
-
-**Software and Dependencies:**
-
-* Adafruit CircuitPython firmware for the ESP8622 and M0-based boards:
-  https://github.com/adafruit/circuitpython/releases
-* Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
 """
 import random
 import time
-import adafruit_bus_device.spi_device as spidev
+import sys
 from micropython import const
+sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
+
+from circuitpython_rfm.rfm_common import RFMSPI
+from circuitpython_rfm.rfm_common import ticks_diff
+from circuitpython_rfm.rfm_common import check_timeout
 
 HAS_SUPERVISOR = False
 
 try:
     import supervisor
 
-    HAS_SUPERVISOR = hasattr(supervisor, "ticks_ms")
+    if hasattr(supervisor, "ticks_ms"):
+        HAS_SUPERVISOR = True
 except ImportError:
     pass
+
 
 try:
     from typing import Callable, Optional, Type
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
-    from digitalio import DigitalInOut
-    from busio import SPI
+    import digitalio
+    import busio
+    try:
+        from typing import Literal
+    except ImportError:
+        from typing_extensions import Literal
+
 except ImportError:
     pass
 
+
 __version__ = "0.0.0+auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM69.git"
+__repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
 
 # Internal constants:
@@ -133,47 +117,8 @@ STANDBY_MODE = 0b001
 FS_MODE = 0b010
 TX_MODE = 0b011
 RX_MODE = 0b100
-# supervisor.ticks_ms() contants
-_TICKS_PERIOD = const(1 << 29)
-_TICKS_MAX = const(_TICKS_PERIOD - 1)
-_TICKS_HALFPERIOD = const(_TICKS_PERIOD // 2)
 
-# Disable the silly too many instance members warning.  Pylint has no knowledge
-# of the context and is merely guessing at the proper amount of members.  This
-# is a complex chip which requires exposing many attributes and state.  Disable
-# the warning to work around the error.
-# pylint: disable=too-many-instance-attributes
-
-# disable another pylint nit-pick
-# pylint: disable=too-many-public-methods
-
-
-def ticks_diff(ticks1: int, ticks2: int) -> int:
-    """Compute the signed difference between two ticks values
-    assuming that they are within 2**28 ticks
-    """
-    diff = (ticks1 - ticks2) & _TICKS_MAX
-    diff = ((diff + _TICKS_HALFPERIOD) & _TICKS_MAX) - _TICKS_HALFPERIOD
-    return diff
-
-
-def check_timeout(flag: Callable, limit: float) -> bool:
-    """test for timeout waiting for specified flag"""
-    timed_out = False
-    if HAS_SUPERVISOR:
-        start = supervisor.ticks_ms()
-        while not timed_out and not flag():
-            if ticks_diff(supervisor.ticks_ms(), start) >= limit * 1000:
-                timed_out = True
-    else:
-        start = time.monotonic()
-        while not timed_out and not flag():
-            if time.monotonic() - start >= limit:
-                timed_out = True
-    return timed_out
-
-
-class RFM69:
+class RFM69(RFMSPI):
     """Interface to a RFM69 series packet radio.  Allows simple sending and
     receiving of wireless data at supported frequencies of the radio
     (433/915mhz).
@@ -215,85 +160,40 @@ class RFM69:
     sender is notified if a packe has potentially been missed.
     """
 
-    # Global buffer for SPI commands.
-    _BUFFER = bytearray(4)
-
-    class _RegisterBits:
-        # Class to simplify access to the many configuration bits avaialable
-        # on the chip's registers.  This is a subclass here instead of using
-        # a higher level module to increase the efficiency of memory usage
-        # (all of the instances of this bit class will share the same buffer
-        # used by the parent RFM69 class instance vs. each having their own
-        # buffer and taking too much memory).
-
-        # Quirk of pylint that it requires public methods for a class.  This
-        # is a decorator class in Python and by design it has no public methods.
-        # Instead it uses dunder accessors like get and set below.  For some
-        # reason pylint can't figure this out so disable the check.
-        # pylint: disable=too-few-public-methods
-
-        # Again pylint fails to see the true intent of this code and warns
-        # against private access by calling the write and read functions below.
-        # This is by design as this is an internally used class.  Disable the
-        # check from pylint.
-        # pylint: disable=protected-access
-
-        def __init__(self, address: int, *, offset: int = 0, bits: int = 1) -> None:
-            assert 0 <= offset <= 7
-            assert 1 <= bits <= 8
-            assert (offset + bits) <= 8
-            self._address = address
-            self._mask = 0
-            for _ in range(bits):
-                self._mask <<= 1
-                self._mask |= 1
-            self._mask <<= offset
-            self._offset = offset
-
-        def __get__(self, obj: Optional["RFM69"], objtype: Type["RFM69"]):
-            reg_value = obj._read_u8(self._address)
-            return (reg_value & self._mask) >> self._offset
-
-        def __set__(self, obj: Optional["RFM69"], val: int) -> None:
-            reg_value = obj._read_u8(self._address)
-            reg_value &= ~self._mask
-            reg_value |= (val & 0xFF) << self._offset
-            obj._write_u8(self._address, reg_value)
-
     # Control bits from the registers of the chip:
-    data_mode = _RegisterBits(_REG_DATA_MOD, offset=5, bits=2)
-    modulation_type = _RegisterBits(_REG_DATA_MOD, offset=3, bits=2)
-    modulation_shaping = _RegisterBits(_REG_DATA_MOD, offset=0, bits=2)
-    temp_start = _RegisterBits(_REG_TEMP1, offset=3)
-    temp_running = _RegisterBits(_REG_TEMP1, offset=2)
-    sync_on = _RegisterBits(_REG_SYNC_CONFIG, offset=7)
-    sync_size = _RegisterBits(_REG_SYNC_CONFIG, offset=3, bits=3)
-    aes_on = _RegisterBits(_REG_PACKET_CONFIG2, offset=0)
-    pa_0_on = _RegisterBits(_REG_PA_LEVEL, offset=7)
-    pa_1_on = _RegisterBits(_REG_PA_LEVEL, offset=6)
-    pa_2_on = _RegisterBits(_REG_PA_LEVEL, offset=5)
-    output_power = _RegisterBits(_REG_PA_LEVEL, offset=0, bits=5)
-    rx_bw_dcc_freq = _RegisterBits(_REG_RX_BW, offset=5, bits=3)
-    rx_bw_mantissa = _RegisterBits(_REG_RX_BW, offset=3, bits=2)
-    rx_bw_exponent = _RegisterBits(_REG_RX_BW, offset=0, bits=3)
-    afc_bw_dcc_freq = _RegisterBits(_REG_AFC_BW, offset=5, bits=3)
-    afc_bw_mantissa = _RegisterBits(_REG_AFC_BW, offset=3, bits=2)
-    afc_bw_exponent = _RegisterBits(_REG_AFC_BW, offset=0, bits=3)
-    packet_format = _RegisterBits(_REG_PACKET_CONFIG1, offset=7, bits=1)
-    dc_free = _RegisterBits(_REG_PACKET_CONFIG1, offset=5, bits=2)
-    crc_on = _RegisterBits(_REG_PACKET_CONFIG1, offset=4, bits=1)
-    crc_auto_clear_off = _RegisterBits(_REG_PACKET_CONFIG1, offset=3, bits=1)
-    address_filter = _RegisterBits(_REG_PACKET_CONFIG1, offset=1, bits=2)
-    mode_ready = _RegisterBits(_REG_IRQ_FLAGS1, offset=7)
-    dio_0_mapping = _RegisterBits(_REG_DIO_MAPPING1, offset=6, bits=2)
+    data_mode = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=5, bits=2)
+    modulation_type = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=3, bits=2)
+    modulation_shaping = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=0, bits=2)
+    temp_start = RFMSPI.RegisterBits(_REG_TEMP1, offset=3)
+    temp_running = RFMSPI.RegisterBits(_REG_TEMP1, offset=2)
+    sync_on = RFMSPI.RegisterBits(_REG_SYNC_CONFIG, offset=7)
+    sync_size = RFMSPI.RegisterBits(_REG_SYNC_CONFIG, offset=3, bits=3)
+    aes_on = RFMSPI.RegisterBits(_REG_PACKET_CONFIG2, offset=0)
+    pa_0_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=7)
+    pa_1_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=6)
+    pa_2_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=5)
+    output_power = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=0, bits=5)
+    rx_bw_dcc_freq = RFMSPI.RegisterBits(_REG_RX_BW, offset=5, bits=3)
+    rx_bw_mantissa = RFMSPI.RegisterBits(_REG_RX_BW, offset=3, bits=2)
+    rx_bw_exponent = RFMSPI.RegisterBits(_REG_RX_BW, offset=0, bits=3)
+    afc_bw_dcc_freq = RFMSPI.RegisterBits(_REG_AFC_BW, offset=5, bits=3)
+    afc_bw_mantissa = RFMSPI.RegisterBits(_REG_AFC_BW, offset=3, bits=2)
+    afc_bw_exponent = RFMSPI.RegisterBits(_REG_AFC_BW, offset=0, bits=3)
+    packet_format = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=7, bits=1)
+    dc_free = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=5, bits=2)
+    crc_on = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=4, bits=1)
+    crc_auto_clear_off = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=3, bits=1)
+    address_filter = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=1, bits=2)
+    mode_ready = RFMSPI.RegisterBits(_REG_IRQ_FLAGS1, offset=7)
+    dio_0_mapping = RFMSPI.RegisterBits(_REG_DIO_MAPPING1, offset=6, bits=2)
 
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-arguments
     def __init__(  # pylint: disable=invalid-name
         self,
-        spi: SPI,
-        cs: DigitalInOut,
-        reset: DigitalInOut,
+        spi: busio.SPI,
+        cs: digitalio.DigitalInOut,
+        rst: digitalio.DigitalInOut,
         frequency: int,
         *,
         sync_word: bytes = b"\x2D\xD4",
@@ -302,24 +202,32 @@ class RFM69:
         high_power: bool = True,
         baudrate: int = 2000000
     ) -> None:
+        super().__init__(
+            spi,
+            cs,
+            rst=rst,
+            baudrate = baudrate
+        )
+
+
         self._tx_power = 13
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
-        self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
+        #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output that's low.
-        self._reset = reset
-        self._reset.switch_to_output(value=False)
-        self.reset()  # Reset the chip.
+        #self._reset = reset
+        #self._reset.switch_to_output(value=False)
+        #self.reset()  # Reset the chip.
         # Check the version of the chip.
-        version = self._read_u8(_REG_VERSION)
+        version = self.read_u8(_REG_VERSION)
         if version != 0x24:
             raise RuntimeError("Invalid RFM69 version, check wiring!")
         self.idle()  # Enter idle state.
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.
-        self._write_u8(_REG_FIFO_THRESH, 0b10001111)
+        self.write_u8(_REG_FIFO_THRESH, 0b10001111)
         # Configure low beta off.
-        self._write_u8(_REG_TEST_DAGC, 0x30)
+        self.write_u8(_REG_TEST_DAGC, 0x30)
         # Set the syncronization word.
         self.sync_word = sync_word
         self.preamble_length = preamble_length  # Set the preamble length.
@@ -395,66 +303,12 @@ class RFM69:
            Fourth byte of the RadioHead header.
         """
 
-    # pylint: enable=too-many-statements
-
-    # pylint: disable=no-member
-    # Reconsider this disable when it can be tested.
-    def _read_into(
-        self, address: int, buf: WriteableBuffer, length: Optional[int] = None
-    ) -> None:
-        # Read a number of bytes from the specified address into the provided
-        # buffer.  If length is not specified (the default) the entire buffer
-        # will be filled.
-        if length is None:
-            length = len(buf)
-        with self._device as device:
-            self._BUFFER[0] = address & 0x7F  # Strip out top bit to set 0
-            # value (read).
-            device.write(self._BUFFER, end=1)
-            device.readinto(buf, end=length)
-
-    def _read_u8(self, address: int) -> int:
-        # Read a single byte from the provided address and return it.
-        self._read_into(address, self._BUFFER, length=1)
-        return self._BUFFER[0]
-
-    def _write_from(
-        self, address: int, buf: ReadableBuffer, length: Optional[int] = None
-    ) -> None:
-        # Write a number of bytes to the provided address and taken from the
-        # provided buffer.  If no length is specified (the default) the entire
-        # buffer is written.
-        if length is None:
-            length = len(buf)
-        with self._device as device:
-            self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to
-            # indicate a write.
-            device.write(self._BUFFER, end=1)
-            device.write(buf, end=length)  # send data
-
-    def _write_u8(self, address: int, val: int) -> None:
-        # Write a byte register to the chip.  Specify the 7-bit address and the
-        # 8-bit value to write to that address.
-        with self._device as device:
-            self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to
-            # indicate a write.
-            self._BUFFER[1] = val & 0xFF
-            device.write(self._BUFFER, end=2)
-
-    def reset(self) -> None:
-        """Perform a reset of the chip."""
-        # See section 7.2.2 of the datasheet for reset description.
-        self._reset.value = True
-        time.sleep(0.0001)  # 100 us
-        self._reset.value = False
-        time.sleep(0.005)  # 5 ms
-
     def disable_boost(self) -> None:
         """Disable preamp boost."""
         if self.high_power:
-            self._write_u8(_REG_TEST_PA1, _TEST_PA1_NORMAL)
-            self._write_u8(_REG_TEST_PA2, _TEST_PA2_NORMAL)
-            self._write_u8(_REG_OCP, _OCP_NORMAL)
+            self.write_u8(_REG_TEST_PA1, _TEST_PA1_NORMAL)
+            self.write_u8(_REG_TEST_PA2, _TEST_PA2_NORMAL)
+            self.write_u8(_REG_OCP, _OCP_NORMAL)
 
     def idle(self) -> None:
         """Enter idle standby mode (switching off high power amplifiers if necessary)."""
@@ -484,9 +338,9 @@ class RFM69:
         """
         # Like RadioHead library, turn on high power boost if needed.
         if self.high_power and (self._tx_power >= 18):
-            self._write_u8(_REG_TEST_PA1, _TEST_PA1_BOOST)
-            self._write_u8(_REG_TEST_PA2, _TEST_PA2_BOOST)
-            self._write_u8(_REG_OCP, _OCP_HIGH_POWER)
+            self.write_u8(_REG_TEST_PA1, _TEST_PA1_BOOST)
+            self.write_u8(_REG_TEST_PA2, _TEST_PA2_BOOST)
+            self.write_u8(_REG_OCP, _OCP_HIGH_POWER)
         # Enable packet sent interrupt for D0 line.
         self.dio_0_mapping = 0b00
         # Enter TX mode (will clear FIFO!).
@@ -505,7 +359,7 @@ class RFM69:
             pass
         # Grab the temperature value and convert it to Celsius.
         # This uses the same observed value formula from the Radiohead library.
-        temp = self._read_u8(_REG_TEMP2)
+        temp = self.read_u8(_REG_TEMP2)
         return 166.0 - temp
 
     @property
@@ -515,17 +369,17 @@ class RFM69:
         changing logical modes--use :py:func:`idle`, :py:func:`sleep`, :py:func:`transmit`,
         :py:func:`listen` instead to signal intent for explicit logical modes.
         """
-        op_mode = self._read_u8(_REG_OP_MODE)
+        op_mode = self.read_u8(_REG_OP_MODE)
         return (op_mode >> 2) & 0b111
 
     @operation_mode.setter
     def operation_mode(self, val: int) -> None:
         assert 0 <= val <= 4
         # Set the mode bits inside the operation mode register.
-        op_mode = self._read_u8(_REG_OP_MODE)
+        op_mode = self.read_u8(_REG_OP_MODE)
         op_mode &= 0b11100011
         op_mode |= val << 2
-        self._write_u8(_REG_OP_MODE, op_mode)
+        self.write_u8(_REG_OP_MODE, op_mode)
         # Wait for mode to change by polling interrupt bit.
         if HAS_SUPERVISOR:
             start = supervisor.ticks_ms()
@@ -576,15 +430,15 @@ class RFM69:
         Received packets must match this length or they are ignored! Set to 4 to match the
         RadioHead RFM69 library.
         """
-        msb = self._read_u8(_REG_PREAMBLE_MSB)
-        lsb = self._read_u8(_REG_PREAMBLE_LSB)
+        msb = self.read_u8(_REG_PREAMBLE_MSB)
+        lsb = self.read_u8(_REG_PREAMBLE_LSB)
         return ((msb << 8) | lsb) & 0xFFFF
 
     @preamble_length.setter
     def preamble_length(self, val: int) -> None:
         assert 0 <= val <= 65535
-        self._write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
-        self._write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
+        self.write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
+        self.write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
 
     @property
     def frequency_mhz(self) -> float:
@@ -594,9 +448,9 @@ class RFM69:
         # FRF register is computed from the frequency following the datasheet.
         # See section 6.2 and FRF register description.
         # Read bytes of FRF register and assemble into a 24-bit unsigned value.
-        msb = self._read_u8(_REG_FRF_MSB)
-        mid = self._read_u8(_REG_FRF_MID)
-        lsb = self._read_u8(_REG_FRF_LSB)
+        msb = self.read_u8(_REG_FRF_MSB)
+        mid = self.read_u8(_REG_FRF_MID)
+        lsb = self.read_u8(_REG_FRF_LSB)
         frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
         frequency = (frf * _FSTEP) / 1000000.0
         return frequency
@@ -610,9 +464,9 @@ class RFM69:
         msb = frf >> 16
         mid = (frf >> 8) & 0xFF
         lsb = frf & 0xFF
-        self._write_u8(_REG_FRF_MSB, msb)
-        self._write_u8(_REG_FRF_MID, mid)
-        self._write_u8(_REG_FRF_LSB, lsb)
+        self.write_u8(_REG_FRF_MSB, msb)
+        self.write_u8(_REG_FRF_MID, mid)
+        self.write_u8(_REG_FRF_LSB, lsb)
 
     @property
     def encryption_key(self) -> bytearray:
@@ -706,7 +560,7 @@ class RFM69:
         receipt of the last packet.
         """
         # Read RSSI register and convert to value using formula in datasheet.
-        return -self._read_u8(_REG_RSSI_VALUE) / 2.0
+        return -self.read_u8(_REG_RSSI_VALUE) / 2.0
 
     @property
     def bitrate(self) -> float:
@@ -714,8 +568,8 @@ class RFM69:
         Can be a value from ~489 to 32mbit/s, but see the datasheet for the exact supported
         values.
         """
-        msb = self._read_u8(_REG_BITRATE_MSB)
-        lsb = self._read_u8(_REG_BITRATE_LSB)
+        msb = self.read_u8(_REG_BITRATE_MSB)
+        lsb = self.read_u8(_REG_BITRATE_LSB)
         return _FXOSC / ((msb << 8) | lsb)
 
     @bitrate.setter
@@ -723,14 +577,14 @@ class RFM69:
         assert (_FXOSC / 65535) <= val <= 32000000.0
         # Round up to the next closest bit-rate value with addition of 0.5.
         bitrate = int((_FXOSC / val) + 0.5) & 0xFFFF
-        self._write_u8(_REG_BITRATE_MSB, bitrate >> 8)
-        self._write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
+        self.write_u8(_REG_BITRATE_MSB, bitrate >> 8)
+        self.write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
 
     @property
     def frequency_deviation(self) -> float:
         """The frequency deviation in Hertz."""
-        msb = self._read_u8(_REG_FDEV_MSB)
-        lsb = self._read_u8(_REG_FDEV_LSB)
+        msb = self.read_u8(_REG_FDEV_MSB)
+        lsb = self.read_u8(_REG_FDEV_LSB)
         return _FSTEP * ((msb << 8) | lsb)
 
     @frequency_deviation.setter
@@ -738,16 +592,16 @@ class RFM69:
         assert 0 <= val <= (_FSTEP * 16383)  # fdev is a 14-bit unsigned value
         # Round up to the next closest integer value with addition of 0.5.
         fdev = int((val / _FSTEP) + 0.5) & 0x3FFF
-        self._write_u8(_REG_FDEV_MSB, fdev >> 8)
-        self._write_u8(_REG_FDEV_LSB, fdev & 0xFF)
+        self.write_u8(_REG_FDEV_MSB, fdev >> 8)
+        self.write_u8(_REG_FDEV_LSB, fdev & 0xFF)
 
     def packet_sent(self) -> bool:
         """Transmit status"""
-        return (self._read_u8(_REG_IRQ_FLAGS2) & 0x8) >> 3
+        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x8) >> 3
 
     def payload_ready(self) -> bool:
         """Receive status"""
-        return (self._read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
+        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
 
     # pylint: disable=too-many-branches
     def send(
@@ -894,7 +748,7 @@ class RFM69:
         self.idle()
         if not timed_out:
             # Read the length of the FIFO.
-            fifo_length = self._read_u8(_REG_FIFO)
+            fifo_length = self.read_u8(_REG_FIFO)
             # Handle if the received packet is too small to include the 4 byte
             # RadioHead header and at least one byte of data --reject this packet and ignore it.
             if fifo_length > 0:  # read and clear the FIFO if anything in it
