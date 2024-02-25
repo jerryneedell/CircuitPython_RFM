@@ -9,7 +9,7 @@ import digitalio
 import sys
 sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
 
-from RFM import rfm9x
+from circuitpython_rfm import rfm9x
 
 
 # Define radio parameters.

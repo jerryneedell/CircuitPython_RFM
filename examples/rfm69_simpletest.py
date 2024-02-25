@@ -13,7 +13,7 @@ import digitalio
 import sys
 sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
 
-from RFM import rfm69
+from circuitpython_rfm import rfm69
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
