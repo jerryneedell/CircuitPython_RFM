@@ -1,7 +1,7 @@
 Introduction
 ============
 
-
+THIS IS AN EARLY WORK IN PROGRESS - DO NOT ATTEMPT TO  USE
 
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -27,7 +27,6 @@ This driver depends on:
 
 * `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
 * `Bus Device <https://github.com/adafruit/Adafruit_CircuitPython_BusDevice>`_
-* `Register <https://github.com/adafruit/Adafruit_CircuitPython_Register>`_
 
 Please ensure all dependencies are available on the CircuitPython filesystem.
 This is easily achieved by downloading
