@@ -215,9 +215,9 @@ class RFM69(RFMSPI):
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output that's low.
-        #self._reset = reset
-        #self._reset.switch_to_output(value=False)
-        #self.reset()  # Reset the chip.
+        self._rst = rst
+        self._rst.switch_to_output(value=False)
+        self.reset()  # Reset the chip.
         # Check the version of the chip.
         version = self.read_u8(_REG_VERSION)
         if version != 0x24:
@@ -302,6 +302,16 @@ class RFM69(RFMSPI):
            Lower 4 bits may be used to pass information.
            Fourth byte of the RadioHead header.
         """
+
+    def reset(self) -> None:
+        """Perform a reset of the chip."""
+        # See section 7.2.2 of the datasheet for reset description.
+        self._rst.value = True
+        time.sleep(0.0001)  # 100 us
+        self._rst.value = False
+        time.sleep(0.005)  # 5 ms
+
+
 
     def disable_boost(self) -> None:
         """Disable preamp boost."""

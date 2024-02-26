@@ -113,11 +113,11 @@ class RFMSPI(RFM):
             self._mask <<= offset
             self._offset = offset
 
-        def __get__(self, obj: "RFM", objtype: Type["RFM"]) -> int:
+        def __get__(self, obj: Optional["RFM"], objtype: Type["RFM"]) -> int:
             reg_value = obj.read_u8(self._address)
             return (reg_value & self._mask) >> self._offset
 
-        def __set__(self, obj: "RFM", val: int) -> None:
+        def __set__(self, obj: Optional["RFM"], val: int) -> None:
             reg_value = obj.read_u8(self._address)
             reg_value &= ~self._mask
             reg_value |= (val & 0xFF) << self._offset
@@ -137,10 +137,10 @@ class RFMSPI(RFM):
         self.spi_device = spi_device.SPIDevice(
             spi, cs, baudrate=baudrate, polarity=polarity, phase=phase
         )
-        self.rst = rst
-        if self.rst:
-            self.rst.switch_to_output(value=0)
-            self.reset()
+        #self.rst = rst
+        #if self.rst:
+        #    self.rst.switch_to_output(value=0)
+        #    self.reset()
         super().__init__()
 
     # pylint: enable-msg=too-many-arguments
@@ -194,10 +194,10 @@ class RFMSPI(RFM):
             self._BUFFER[1] = val & 0xFF
             device.write(self._BUFFER, end=2)
 
-    def reset(self) -> None:
-        """Perform a reset of the chip."""
-        # See section 7.2.2 of the datasheet for reset description.
-        self.rst.value = False  # Set Reset Low
-        time.sleep(0.0001)  # 100 us
-        self.rst.value = True  # set Reset High
-        time.sleep(0.005)  # 5 ms
+    #def reset(self) -> None:
+    #    """Perform a reset of the chip."""
+    #    # See section 7.2.2 of the datasheet for reset description.
+    #    self.rst.value = True  # Set Reset Low
+    #    time.sleep(0.0001)  # 100 us
+    #    self.rst.value = False  # set Reset High
+    #    time.sleep(0.005)  # 5 ms
