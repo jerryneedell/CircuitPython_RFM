@@ -222,10 +222,10 @@ class RFM9x(RFMSPI):
         #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output - initially High
         # This line is pulled low as an output quickly to trigger a reset.
-        #self._reset = reset
+        self._rst = rst
         # initialize Reset High
-        #self._reset.switch_to_output(value=True)
-        #self.reset()
+        self._rst.switch_to_output(value=True)
+        self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
         version = self.read_u8(address=_RH_RF95_REG_42_VERSION)
@@ -322,6 +322,15 @@ class RFM9x(RFMSPI):
            Fourth byte of the RadioHead header.
         """
         self.crc_error_count = 0
+
+    def reset(self) -> None:
+        """Perform a reset of the chip."""
+        # See section 7.2.2 of the datasheet for reset description.
+        self._rst.value = False  # Set Reset Low
+        time.sleep(0.0001)  # 100 us
+        self._rst.value = True  # set Reset High
+        time.sleep(0.005)  # 5 ms
+
 
     def idle(self) -> None:
         """Enter idle standby mode."""
