@@ -323,6 +323,134 @@ class RFMSPI(RFM):
     #    self.rst.value = False  # set Reset High
     #    time.sleep(0.005)  # 5 ms
 
+
+    # pylint: disable=too-many-branches
+    def send(
+        self,
+        data: ReadableBuffer,
+        *,
+        keep_listening: bool = False,
+        destination: Optional[int] = None,
+        node: Optional[int] = None,
+        identifier: Optional[int] = None,
+        flags: Optional[int] = None
+    ) -> bool:
+        """Send a string of data using the transmitter.
+        You can only send 252 bytes at a time
+        (limited by chip's FIFO size and appended headers).
+        This appends a 4 byte header to be compatible with the RadioHead library.
+        The header defaults to using the initialized attributes:
+        (destination,node,identifier,flags)
+        It may be temporarily overidden via the kwargs - destination,node,identifier,flags.
+        Values passed via kwargs do not alter the attribute settings.
+        The keep_listening argument should be set to True if you want to start listening
+        automatically after the packet is sent. The default setting is False.
+
+        Returns: True if success or False if the send timed out.
+        """
+        # Disable pylint warning to not use length as a check for zero.
+        # This is a puzzling warning as the below code is clearly the most
+        # efficient and proper way to ensure a precondition that the provided
+        # buffer be within an expected range of bounds. Disable this check.
+        # pylint: disable=len-as-condition
+        if self.module == 'RFM9X':
+            max_packet_length = 252
+        elif self.module == 'RFM69':
+            max_packet_length = 60
+        else:
+            raise RuntimeError("Unknown Module Type")
+        assert 0 < len(data) <= max_packet_length
+        # pylint: enable=len-as-condition
+        self.idle()  # Stop receiving to clear FIFO and keep it clear.
+        if self.module == 'RFM9X':
+            # Fill the FIFO with a packet to send.
+            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
+        # Combine header and data to form payload
+        payload = bytearray(4)
+        if destination is None:  # use attribute
+            payload[0] = self.destination
+        else:  # use kwarg
+            payload[0] = destination
+        if node is None:  # use attribute
+            payload[1] = self.node
+        else:  # use kwarg
+            payload[1] = node
+        if identifier is None:  # use attribute
+            payload[2] = self.identifier
+        else:  # use kwarg
+            payload[2] = identifier
+        if flags is None:  # use attribute
+            payload[3] = self.flags
+        else:  # use kwarg
+            payload[3] = flags
+        payload = payload + data
+        # put the payload lengthe in the beginning of the packet for RFM69
+        if self.module == 'RFM69':
+            payload.insert(0,4 + len(data))
+        if self.module == 'RFM9X':
+            # Write payload.
+            self.write_from(_RH_RF95_REG_00_FIFO, payload)
+            # Write payload and header length.
+            self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+            # Turn on transmit mode to send out the packet.
+        elif self.module == 'RFM69':
+            # Write payload to transmit fifo
+            self.write_from(_REG_FIFO, payload)
+        else:
+            raise RuntimeError("Unknown Module Type")
+        self.transmit()
+        # Wait for packet_sent interrupt with explicit polling (not ideal but
+        # best that can be done right now without interrupts).
+        timed_out = check_timeout(self.packet_sent, self.xmit_timeout)
+        # Listen again if necessary and return the result packet.
+        if keep_listening:
+            self.listen()
+        else:
+            # Enter idle mode to stop receiving other packets.
+            self.idle()
+        if self.module == 'RFM9X':
+            # Clear interrupt.
+            self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        return not timed_out
+
+    def send_with_ack(self, data: ReadableBuffer) -> bool:
+        """Reliable Datagram mode:
+        Send a packet with data and wait for an ACK response.
+        The packet header is automatically generated.
+        If enabled, the packet transmission will be retried on failure
+        """
+        if self.ack_retries:
+            retries_remaining = self.ack_retries
+        else:
+            retries_remaining = 1
+        got_ack = False
+        self.sequence_number = (self.sequence_number + 1) & 0xFF
+        while not got_ack and retries_remaining:
+            self.identifier = self.sequence_number
+            self.send(data, keep_listening=True)
+            # Don't look for ACK from Broadcast message
+            if self.destination == _RH_BROADCAST_ADDRESS:
+                got_ack = True
+            else:
+                # wait for a packet from our destination
+                ack_packet = self.receive(timeout=self.ack_wait, with_header=True)
+                if ack_packet is not None:
+                    if ack_packet[3] & _RH_FLAGS_ACK:
+                        # check the ID
+                        if ack_packet[2] == self.identifier:
+                            got_ack = True
+                            break
+            # pause before next retry -- random delay
+            if not got_ack:
+                # delay by random amount before next try
+                time.sleep(self.ack_wait + self.ack_wait * random.random())
+            retries_remaining = retries_remaining - 1
+            # set retry flag in packet header
+            self.flags |= _RH_FLAGS_RETRY
+        self.flags = 0  # clear flags
+        return got_ack
+
+
     def receive(
         self,
         *,
