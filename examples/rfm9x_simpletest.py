@@ -7,11 +7,11 @@ import board
 import busio
 import digitalio
 try:
-    from circuitpython_rfm import rfm69
+    from circuitpython_rfm import rfm9x
 except ImportError:
     import sys
     sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
-    from circuitpython_rfm import rfm69
+    from circuitpython_rfm import rfm9x
 
 
 # Define radio parameters.
