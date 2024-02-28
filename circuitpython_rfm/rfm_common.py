@@ -39,111 +39,13 @@ __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 # Internal constants:
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
 _RH_RF95_REG_00_FIFO = const(0x00)
-_RH_RF95_REG_01_OP_MODE = const(0x01)
-_RH_RF95_REG_06_FRF_MSB = const(0x06)
-_RH_RF95_REG_07_FRF_MID = const(0x07)
-_RH_RF95_REG_08_FRF_LSB = const(0x08)
-_RH_RF95_REG_09_PA_CONFIG = const(0x09)
-_RH_RF95_REG_0A_PA_RAMP = const(0x0A)
-_RH_RF95_REG_0B_OCP = const(0x0B)
-_RH_RF95_REG_0C_LNA = const(0x0C)
 _RH_RF95_REG_0D_FIFO_ADDR_PTR = const(0x0D)
-_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR = const(0x0E)
-_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR = const(0x0F)
 _RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR = const(0x10)
-_RH_RF95_REG_11_IRQ_FLAGS_MASK = const(0x11)
 _RH_RF95_REG_12_IRQ_FLAGS = const(0x12)
 _RH_RF95_REG_13_RX_NB_BYTES = const(0x13)
-_RH_RF95_REG_14_RX_HEADER_CNT_VALUE_MSB = const(0x14)
-_RH_RF95_REG_15_RX_HEADER_CNT_VALUE_LSB = const(0x15)
-_RH_RF95_REG_16_RX_PACKET_CNT_VALUE_MSB = const(0x16)
-_RH_RF95_REG_17_RX_PACKET_CNT_VALUE_LSB = const(0x17)
-_RH_RF95_REG_18_MODEM_STAT = const(0x18)
-_RH_RF95_REG_19_PKT_SNR_VALUE = const(0x19)
-_RH_RF95_REG_1A_PKT_RSSI_VALUE = const(0x1A)
-_RH_RF95_REG_1B_RSSI_VALUE = const(0x1B)
-_RH_RF95_REG_1C_HOP_CHANNEL = const(0x1C)
-_RH_RF95_REG_1D_MODEM_CONFIG1 = const(0x1D)
-_RH_RF95_REG_1E_MODEM_CONFIG2 = const(0x1E)
-_RH_RF95_REG_1F_SYMB_TIMEOUT_LSB = const(0x1F)
-_RH_RF95_REG_20_PREAMBLE_MSB = const(0x20)
-_RH_RF95_REG_21_PREAMBLE_LSB = const(0x21)
 _RH_RF95_REG_22_PAYLOAD_LENGTH = const(0x22)
-_RH_RF95_REG_23_MAX_PAYLOAD_LENGTH = const(0x23)
-_RH_RF95_REG_24_HOP_PERIOD = const(0x24)
-_RH_RF95_REG_25_FIFO_RX_BYTE_ADDR = const(0x25)
-_RH_RF95_REG_26_MODEM_CONFIG3 = const(0x26)
-
-_RH_RF95_REG_40_DIO_MAPPING1 = const(0x40)
-_RH_RF95_REG_41_DIO_MAPPING2 = const(0x41)
-_RH_RF95_REG_42_VERSION = const(0x42)
-
-_RH_RF95_REG_4B_TCXO = const(0x4B)
-_RH_RF95_REG_4D_PA_DAC = const(0x4D)
-_RH_RF95_REG_5B_FORMER_TEMP = const(0x5B)
-_RH_RF95_REG_61_AGC_REF = const(0x61)
-_RH_RF95_REG_62_AGC_THRESH1 = const(0x62)
-_RH_RF95_REG_63_AGC_THRESH2 = const(0x63)
-_RH_RF95_REG_64_AGC_THRESH3 = const(0x64)
-
-_RH_RF95_DETECTION_OPTIMIZE = const(0x31)
-_RH_RF95_DETECTION_THRESHOLD = const(0x37)
-
-_RH_RF95_PA_DAC_DISABLE = const(0x04)
-_RH_RF95_PA_DAC_ENABLE = const(0x07)
-
-# The crystal oscillator frequency of the module
-_RH_RF95_FXOSC = 32000000.0
-
 # Internal constants:
 _REG_FIFO = const(0x00)
-_REG_OP_MODE = const(0x01)
-_REG_DATA_MOD = const(0x02)
-_REG_BITRATE_MSB = const(0x03)
-_REG_BITRATE_LSB = const(0x04)
-_REG_FDEV_MSB = const(0x05)
-_REG_FDEV_LSB = const(0x06)
-_REG_FRF_MSB = const(0x07)
-_REG_FRF_MID = const(0x08)
-_REG_FRF_LSB = const(0x09)
-_REG_VERSION = const(0x10)
-_REG_PA_LEVEL = const(0x11)
-_REG_OCP = const(0x13)
-_REG_RX_BW = const(0x19)
-_REG_AFC_BW = const(0x1A)
-_REG_RSSI_VALUE = const(0x24)
-_REG_DIO_MAPPING1 = const(0x25)
-_REG_IRQ_FLAGS1 = const(0x27)
-_REG_IRQ_FLAGS2 = const(0x28)
-_REG_PREAMBLE_MSB = const(0x2C)
-_REG_PREAMBLE_LSB = const(0x2D)
-_REG_SYNC_CONFIG = const(0x2E)
-_REG_SYNC_VALUE1 = const(0x2F)
-_REG_PACKET_CONFIG1 = const(0x37)
-_REG_FIFO_THRESH = const(0x3C)
-_REG_PACKET_CONFIG2 = const(0x3D)
-_REG_AES_KEY1 = const(0x3E)
-_REG_TEMP1 = const(0x4E)
-_REG_TEMP2 = const(0x4F)
-_REG_TEST_PA1 = const(0x5A)
-_REG_TEST_PA2 = const(0x5C)
-_REG_TEST_DAGC = const(0x6F)
-
-_TEST_PA1_NORMAL = const(0x55)
-_TEST_PA1_BOOST = const(0x5D)
-_TEST_PA2_NORMAL = const(0x70)
-_TEST_PA2_BOOST = const(0x7C)
-_OCP_NORMAL = const(0x1A)
-_OCP_HIGH_POWER = const(0x0F)
-
-# The crystal oscillator frequency and frequency synthesizer step size.
-# See the datasheet for details of this calculation.
-_FXOSC = 32000000.0
-_FSTEP = _FXOSC / 524288
-
-
-# The Frequency Synthesizer step = RH_RF95_FXOSC / 2^^19
-_RH_RF95_FSTEP = _RH_RF95_FXOSC / 524288
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
