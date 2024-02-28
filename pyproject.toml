@@ -40,7 +40,7 @@ dynamic = ["dependencies", "optional-dependencies"]
 [tool.setuptools]
 # TODO: IF LIBRARY FILES ARE A PACKAGE FOLDER,
 #       CHANGE `py_modules = ['...']` TO `packages = ['...']`
-py-modules = ["rfm"]
+packages = ["circuitpython_rfm"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

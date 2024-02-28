@@ -6,13 +6,7 @@
 import board
 import busio
 import digitalio
-try:
-    from circuitpython_rfm import rfm69
-except ImportError:
-    import sys
-    sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
-    from circuitpython_rfm import rfm69
-
+from circuitpython_rfm import rfm69
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
