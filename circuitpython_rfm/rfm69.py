@@ -421,7 +421,7 @@ class RFM69(RFMSPI):
         sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
         # according to datasheet.
         sync_word = bytearray(sync_word_length)
-        seld.read_into(_REG_SYNC_VALUE1, sync_word)
+        self.read_into(_REG_SYNC_VALUE1, sync_word)
         return sync_word
 
     @sync_word.setter
@@ -494,7 +494,7 @@ class RFM69(RFMSPI):
             return None
         # Encryption is enabled so read the key and return it.
         key = bytearray(16)
-        seld.read_into(_REG_AES_KEY1, key)
+        self.read_into(_REG_AES_KEY1, key)
         return key
 
     @encryption_key.setter
