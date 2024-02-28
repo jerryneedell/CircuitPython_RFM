@@ -200,7 +200,8 @@ class RFM69(RFMSPI):
         preamble_length: int = 4,
         encryption_key: Optional[bytes] = None,
         high_power: bool = True,
-        baudrate: int = 2000000
+        baudrate: int = 2000000,
+        crc: bool = True
     ) -> None:
         super().__init__(
             spi,
@@ -209,7 +210,7 @@ class RFM69(RFMSPI):
             baudrate = baudrate
         )
 
-
+        self.module='RFM69'
         self._tx_power = 13
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
@@ -302,6 +303,10 @@ class RFM69(RFMSPI):
            Lower 4 bits may be used to pass information.
            Fourth byte of the RadioHead header.
         """
+        # Default to enable CRC checking on incoming packets.
+        self.enable_crc = crc
+        """CRC Enable state"""
+        self.crc_error_count = 0
 
     def reset(self) -> None:
         """Perform a reset of the chip."""
@@ -605,6 +610,29 @@ class RFM69(RFMSPI):
         self.write_u8(_REG_FDEV_MSB, fdev >> 8)
         self.write_u8(_REG_FDEV_LSB, fdev & 0xFF)
 
+
+    @property
+    def enable_crc(self) -> bool:
+        """Set to True to enable hardware CRC checking of incoming packets.
+        Incoming packets that fail the CRC check are not processed.  Set to
+        False to disable CRC checking and process all incoming packets."""
+        return (self.crc_on)
+
+
+    @enable_crc.setter
+    def enable_crc(self, val: bool) -> None:
+        # Optionally enable CRC checking on incoming packets.
+        if val:
+            self.crc_on = 1
+        else:
+            self.crc_on = 0
+
+    def crc_error(self) -> bool:
+        """crc status"""
+        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x2) >> 1
+
+
+
     def packet_sent(self) -> bool:
         """Transmit status"""
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x8) >> 3
@@ -757,51 +785,53 @@ class RFM69(RFMSPI):
         # Enter idle mode to stop receiving other packets.
         self.idle()
         if not timed_out:
-            # Read the length of the FIFO.
-            fifo_length = self.read_u8(_REG_FIFO)
-            # Handle if the received packet is too small to include the 4 byte
-            # RadioHead header and at least one byte of data --reject this packet and ignore it.
-            if fifo_length > 0:  # read and clear the FIFO if anything in it
-                packet = bytearray(fifo_length)
-                seld.read_into(_REG_FIFO, packet, fifo_length)
-
-            if fifo_length < 5:
-                packet = None
+            if self.enable_crc and self.crc_error():
+                self.crc_error_count += 1
             else:
-                if (
-                    self.node != _RH_BROADCAST_ADDRESS
-                    and packet[0] != _RH_BROADCAST_ADDRESS
-                    and packet[0] != self.node
-                ):
+                # Read the length of the FIFO.
+                fifo_length = self.read_u8(_REG_FIFO)
+                # Handle if the received packet is too small to include the 4 byte
+                # RadioHead header and at least one byte of data --reject this packet and ignore it.
+                if fifo_length > 0:  # read and clear the FIFO if anything in it
+                    packet = bytearray(fifo_length)
+                    seld.read_into(_REG_FIFO, packet, fifo_length)
+
+                if fifo_length < 5:
                     packet = None
-                # send ACK unless this was an ACK or a broadcast
-                elif (
-                    with_ack
-                    and ((packet[3] & _RH_FLAGS_ACK) == 0)
-                    and (packet[0] != _RH_BROADCAST_ADDRESS)
-                ):
-                    # delay before sending Ack to give receiver a chance to get ready
-                    if self.ack_delay is not None:
-                        time.sleep(self.ack_delay)
-                    # send ACK packet to sender (data is b'!')
-                    self.send(
-                        b"!",
-                        destination=packet[1],
-                        node=packet[0],
-                        identifier=packet[2],
-                        flags=(packet[3] | _RH_FLAGS_ACK),
-                    )
-                    # reject Retries if we have seen this idetifier from this source before
-                    if (self.seen_ids[packet[1]] == packet[2]) and (
-                        packet[3] & _RH_FLAGS_RETRY
+                else:
+                    if (
+                        self.node != _RH_BROADCAST_ADDRESS
+                        and packet[0] != _RH_BROADCAST_ADDRESS
+                        and packet[0] != self.node
                     ):
                         packet = None
-                    else:  # save the packet identifier for this source
-                        self.seen_ids[packet[1]] = packet[2]
-                if (
-                    not with_header and packet is not None
-                ):  # skip the header if not wanted
-                    packet = packet[4:]
+                    # send ACK unless this was an ACK or a broadcast
+                    elif (
+                        with_ack
+                        and ((packet[3] & _RH_FLAGS_ACK) == 0)
+                        and (packet[0] != _RH_BROADCAST_ADDRESS)
+                    ):
+                        # delay before sending Ack to give receiver a chance to get ready
+                        if self.ack_delay is not None:
+                            time.sleep(self.ack_delay)
+                        # send ACK packet to sender (data is b'!')
+                        self.send(
+                            b"!",
+                            destination=packet[1],
+                            node=packet[0],
+                            identifier=packet[2],
+                            flags=(packet[3] | _RH_FLAGS_ACK),
+                        )
+                        # reject Retries if we have seen this idetifier from this source before
+                        if (self.seen_ids[packet[1]] == packet[2]) and (
+                            packet[3] & _RH_FLAGS_RETRY
+                        ):
+                            packet = None
+                        else:  # save the packet identifier for this source
+                            self.seen_ids[packet[1]] = packet[2]
+                    # skip the header if not wanted
+                    if ( not with_header and packet is not None ):
+                        packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()

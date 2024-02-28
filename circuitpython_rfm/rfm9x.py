@@ -19,19 +19,7 @@ from micropython import const
 sys.path.append('/home/jerryneedell/projects/combined_rfm/CircuitPython_RFM')
 
 from circuitpython_rfm.rfm_common import RFMSPI
-from circuitpython_rfm.rfm_common import ticks_diff
 from circuitpython_rfm.rfm_common import check_timeout
-
-
-HAS_SUPERVISOR = False
-
-try:
-    import supervisor
-
-    if hasattr(supervisor, "ticks_ms"):
-        HAS_SUPERVISOR = True
-except ImportError:
-    pass
 
 
 try:
@@ -215,7 +203,7 @@ class RFM9x(RFMSPI):
             rst=rst,
             baudrate = baudrate
         )
-
+        self.module='RFM9X'
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
