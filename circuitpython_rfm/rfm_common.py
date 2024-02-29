@@ -36,16 +36,6 @@ __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
 
-# Internal constants:
-# Register names (FSK Mode even though we use LoRa instead, from table 85)
-_RH_RF95_REG_00_FIFO = const(0x00)
-_RH_RF95_REG_0D_FIFO_ADDR_PTR = const(0x0D)
-_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR = const(0x10)
-_RH_RF95_REG_12_IRQ_FLAGS = const(0x12)
-_RH_RF95_REG_13_RX_NB_BYTES = const(0x13)
-_RH_RF95_REG_22_PAYLOAD_LENGTH = const(0x22)
-# Internal constants:
-_REG_FIFO = const(0x00)
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
@@ -278,20 +268,7 @@ class RFMSPI(RFM):
             payload[3] = flags
         payload = payload + data
         # put the payload lengthe in the beginning of the packet for RFM69
-        if self.module == 'RFM69':
-            payload.insert(0,4 + len(data))
-        if self.module == 'RFM9X':
-            # Fill the FIFO with a packet to send.
-            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
-            # Write payload.
-            self.write_from(_RH_RF95_REG_00_FIFO, payload)
-            # Write payload and header length.
-            self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
-        elif self.module == 'RFM69':
-            # Write payload to transmit fifo
-            self.write_from(_REG_FIFO, payload)
-        else:
-            raise RuntimeError("Unknown Module Type")
+        self.fill_FIFO(payload,len(data))
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for packet_sent interrupt with explicit polling (not ideal but
@@ -303,9 +280,7 @@ class RFMSPI(RFM):
         else:
             # Enter idle mode to stop receiving other packets.
             self.idle()
-        if self.module == 'RFM9X':
-            # Clear interrupt.
-            self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        self.clear_interrupt()
         return not timed_out
 
     def send_with_ack(self, data: ReadableBuffer) -> bool:
@@ -383,9 +358,7 @@ class RFMSPI(RFM):
         packet = None
         # save last RSSI reading
         self.last_rssi = self.rssi
-        if self.module == 'RFM9X':
-            # save the last SNR reading
-            self.last_snr = self.snr
+        self.last_snr = self.snr
 
         # Enter idle mode to stop receiving other packets.
         self.idle()
@@ -393,35 +366,8 @@ class RFMSPI(RFM):
             if self.enable_crc and self.crc_error():
                 self.crc_error_count += 1
             else:
-                # Read the data from the FIFO.
-                # Read the length of the FIFO.
-                if self.module == 'RFM9X':
-                    fifo_length = self.read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-                elif self.module == 'RFM69':
-                    fifo_length = self.read_u8(_REG_FIFO)
-                else:
-                    raise RuntimeError("Unknown Module Type")
-                # Handle if the received packet is too small to include the 4 byte
-                # RadioHead header and at least one byte of data --reject this packet and ignore it.
-                if fifo_length > 0:  # read and clear the FIFO if anything in it
-                    packet = bytearray(fifo_length)
-                    if self.module == 'RFM9X':
-                        current_addr = self.read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                        self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                        # read the packet
-                        self.read_into(_RH_RF95_REG_00_FIFO, packet)
-
-                    elif self.module == 'RFM69':
-                        # read the packet
-                        self.read_into(_REG_FIFO, packet, fifo_length)
-                    else:
-                        raise RuntimeError("Unknown Module Type")
-                    if self.module == 'RFM9X':
-                        # clear interrupt
-                        self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
-                if fifo_length < 5:
-                    packet = None
-                else:
+                packet = self.read_FIFO()
+                if packet is not None:
                     if (
                         self.node != _RH_BROADCAST_ADDRESS
                         and packet[0] != _RH_BROADCAST_ADDRESS
@@ -462,7 +408,5 @@ class RFMSPI(RFM):
         else:
             # Enter idle mode to stop receiving other packets.
             self.idle()
-        if self.module == 'RFM9x':
-            # Clear interrupt.
-            self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        self.clear_interrupt()
         return packet

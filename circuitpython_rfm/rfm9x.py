@@ -572,3 +572,40 @@ class RFM9x(RFMSPI):
     def payload_ready(self) -> bool:
         """Receive status"""
         return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+
+    def clear_interrupt(self) -> None:
+        self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+
+    def fill_FIFO(self,payload: bytearray,data: bytearray) -> None:
+        # put the payload lengthe in the beginning of the packet for RFM69
+        if self.module == 'RFM69':
+            payload.insert(0,4 + len(data))
+        if self.module == 'RFM9X':
+            # Fill the FIFO with a packet to send.
+            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
+            # Write payload.
+            self.write_from(_RH_RF95_REG_00_FIFO, payload)
+            # Write payload and header length.
+            self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+        elif self.module == 'RFM69':
+            # Write payload to transmit fifo
+            self.write_from(_REG_FIFO, payload)
+        else:
+            raise RuntimeError("Unknown Module Type")
+
+    def read_FIFO(self) -> bytearray:
+        # Read the data from the FIFO.
+        # Read the length of the FIFO.
+        fifo_length = self.read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+        # Handle if the received packet is too small to include the 4 byte
+        # RadioHead header and at least one byte of data --reject this packet and ignore it.
+        if fifo_length > 0:  # read and clear the FIFO if anything in it
+            packet = bytearray(fifo_length)
+            current_addr = self.read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+            # read the packet
+            self.read_into(_RH_RF95_REG_00_FIFO, packet)
+
+            # clear interrupt
+            self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        return packet

@@ -258,6 +258,10 @@ class RFM69(RFMSPI):
            This instantaneous RSSI value may not be accurate once the
            operating mode has been changed.
         """
+        self.snr = None
+        self.last_snr = None
+        """RFM69 does not measure SNR -- thsi sis a dummy value for compatibility
+        """
         # initialize timeouts and delays delays
         self.ack_wait = 0.5
         """The delay time before attempting a retry after not receiving an ACK"""
@@ -640,3 +644,26 @@ class RFM69(RFMSPI):
     def payload_ready(self) -> bool:
         """Receive status"""
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
+
+    def clear_interrupt(self) -> None:
+        pass
+
+    def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
+        # put the payload lengthe in the beginning of the packet for RFM69
+        payload.insert(0,4 + len_data)
+        # Write payload to transmit fifo
+        self.write_from(_REG_FIFO, payload)
+
+    def read_FIFO(self) -> bytearray:
+        # Read the data from the FIFO.
+        # Read the length of the FIFO.
+        fifo_length = self.read_u8(_REG_FIFO)
+        # Handle if the received packet is too small to include the 4 byte
+        # RadioHead header and at least one byte of data --reject this packet and ignore it.
+        if fifo_length > 0:  # read and clear the FIFO if anything in it
+            packet = bytearray(fifo_length)
+            # read the packet
+            self.read_into(_REG_FIFO, packet, fifo_length)
+        if fifo_length < 5:
+             packet = None
+        return packet
