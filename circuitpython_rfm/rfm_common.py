@@ -255,18 +255,9 @@ class RFMSPI(RFM):
         # efficient and proper way to ensure a precondition that the provided
         # buffer be within an expected range of bounds. Disable this check.
         # pylint: disable=len-as-condition
-        if self.module == 'RFM9X':
-            max_packet_length = 252
-        elif self.module == 'RFM69':
-            max_packet_length = 60
-        else:
-            raise RuntimeError("Unknown Module Type")
-        assert 0 < len(data) <= max_packet_length
+        assert 0 < len(data) <= self.max_packet_length
         # pylint: enable=len-as-condition
         self.idle()  # Stop receiving to clear FIFO and keep it clear.
-        if self.module == 'RFM9X':
-            # Fill the FIFO with a packet to send.
-            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Combine header and data to form payload
         payload = bytearray(4)
         if destination is None:  # use attribute
@@ -290,16 +281,18 @@ class RFMSPI(RFM):
         if self.module == 'RFM69':
             payload.insert(0,4 + len(data))
         if self.module == 'RFM9X':
+            # Fill the FIFO with a packet to send.
+            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
             # Write payload.
             self.write_from(_RH_RF95_REG_00_FIFO, payload)
             # Write payload and header length.
             self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
-            # Turn on transmit mode to send out the packet.
         elif self.module == 'RFM69':
             # Write payload to transmit fifo
             self.write_from(_REG_FIFO, payload)
         else:
             raise RuntimeError("Unknown Module Type")
+        # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for packet_sent interrupt with explicit polling (not ideal but
         # best that can be done right now without interrupts).

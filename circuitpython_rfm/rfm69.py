@@ -210,6 +210,7 @@ class RFM69(RFMSPI):
         )
 
         self.module='RFM69'
+        self.max_packet_length = 60
         self._tx_power = 13
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
