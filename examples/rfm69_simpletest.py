@@ -64,7 +64,7 @@ while True:
         try:
             packet_text = str(packet, "ascii")
             print("Received (ASCII): {0}".format(packet_text))
-        except UnicodeDecodeError:
+        except UnicodeError:
             print("Hex data: ",[hex(x) for x in packet])
         rssi = rfm69.last_rssi
         print("Received signal strength: {0} dB".format(rssi))
