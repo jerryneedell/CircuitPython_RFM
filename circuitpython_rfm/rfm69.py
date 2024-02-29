@@ -649,10 +649,12 @@ class RFM69(RFMSPI):
         pass
 
     def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
+        rfm69_payload = bytearray(1)
+        rfm69_payload[0] = 4 + len_data
         # put the payload lengthe in the beginning of the packet for RFM69
-        payload.insert(0,4 + len_data)
+        rfm69_payload = rfm69_payload + payload
         # Write payload to transmit fifo
-        self.write_from(_REG_FIFO, payload)
+        self.write_from(_REG_FIFO, rfm69_payload)
 
     def read_FIFO(self) -> bytearray:
         # Read the data from the FIFO.
