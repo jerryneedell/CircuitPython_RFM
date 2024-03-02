@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-# Simple demo of sending and recieving data with the rfm9x LoRa radio.
+# Simple demo of sending and recieving data with the rfm9x FSK radio.
 # Author: Jerry Needell
 import board
 import busio
@@ -20,19 +20,19 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9x = rfm9xFSK.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm9xFSK = rfm9xFSK.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # Print out some chip state:
-print("Temperature: {0}C".format(rfm9x.temperature))
-print("Frequency: {0}mhz".format(rfm9x.frequency_mhz))
-print("Bit rate: {0}kbit/s".format(rfm9x.bitrate / 1000))
-print("Frequency deviation: {0}hz".format(rfm9x.frequency_deviation))
+print("Temperature: {0}C".format(rfm9xFSK.temperature))
+print("Frequency: {0}mhz".format(rfm9xFSK.frequency_mhz))
+print("Bit rate: {0}kbit/s".format(rfm9xFSK.bitrate / 1000))
+print("Frequency deviation: {0}hz".format(rfm9xFSK.frequency_deviation))
 
 # Send a packet.  Note you can only send a packet up to 60 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
 # call will wait for the previous one to finish before continuing.
-rfm9x.send(bytes("Hello world!\r\n", "utf-8"))
+rfm9xFSK.send(bytes("Hello world!\r\n", "utf-8"))
 print("Sent hello world message!")
 
 # Wait to receive packets.  Note that this library can't receive data at a fast
@@ -41,9 +41,9 @@ print("Sent hello world message!")
 # and receiving a single message at a time.
 print("Waiting for packets...")
 while True:
-    packet = rfm9x.receive()
+    packet = rfm9xFSK.receive()
     # Optionally change the receive timeout from its default of 0.5 seconds:
-    # packet = rfm9x.receive(timeout=5.0)
+    # packet = rfm9xFSK.receive(timeout=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is None:
         # Packet has not been received
@@ -61,5 +61,5 @@ while True:
             print("Received (ASCII): {0}".format(packet_text))
         except UnicodeDecodeError:
             print("Hex data: ",[hex(x) for x in packet])
-        rssi = rfm9x.last_rssi
+        rssi = rfm9xFSK.last_rssi
         print("Received signal strength: {0} dB".format(rssi))
