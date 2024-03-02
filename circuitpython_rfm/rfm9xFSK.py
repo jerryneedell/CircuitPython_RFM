@@ -274,60 +274,7 @@ class RFM9xFSK(RFMSPI):
         # Default to enable CRC checking on incoming packets.
         self.enable_crc = crc
         """CRC Enable state"""
-        # initialize last RSSI reading
-        self.last_rssi = 0.0
-        """The RSSI of the last received packet. Stored when the packet was received.
-           The instantaneous RSSI value may not be accurate once the
-           operating mode has been changed.
-        """
         self.snr = None
-        self.last_snr =  None
-        # initialize timeouts and delays delays
-        self.ack_wait = 0.5
-        """The delay time before attempting a retry after not receiving an ACK"""
-        self.receive_timeout = 0.5
-        """The amount of time to poll for a received packet.
-           If no packet is received, the returned packet will be None
-        """
-        self.xmit_timeout = 2.0
-        """The amount of time to wait for the HW to transmit the packet.
-           This is mainly used to prevent a hang due to a HW issue
-        """
-        self.ack_retries = 5
-        """The number of ACK retries before reporting a failure."""
-        self.ack_delay = None
-        """The delay time before attemting to send an ACK.
-           If ACKs are being missed try setting this to .1 or .2.
-        """
-        # initialize sequence number counter for reliabe datagram mode
-        self.sequence_number = 0
-        # create seen Ids list
-        self.seen_ids = bytearray(256)
-        # initialize packet header
-        # node address - default is broadcast
-        self.node = _RH_BROADCAST_ADDRESS
-        """The default address of this Node. (0-255).
-           If not 255 (0xff) then only packets address to this node will be accepted.
-           First byte of the RadioHead header.
-        """
-        # destination address - default is broadcast
-        self.destination = _RH_BROADCAST_ADDRESS
-        """The default destination address for packet transmissions. (0-255).
-           If 255 (0xff) then any receiving node should accept the packet.
-           Second byte of the RadioHead header.
-        """
-        # ID - contains seq count for reliable datagram mode
-        self.identifier = 0
-        """Automatically set to the sequence number when send_with_ack() used.
-           Third byte of the RadioHead header.
-        """
-        # flags - identifies ack/reetry packet for reliable datagram mode
-        self.flags = 0
-        """Upper 4 bits reserved for use by Reliable Datagram Mode.
-           Lower 4 bits may be used to pass information.
-           Fourth byte of the RadioHead header.
-        """
-        self.crc_error_count = 0
 
     def reset(self) -> None:
         """Perform a reset of the chip."""
