@@ -587,7 +587,8 @@ class RFM69(RFMSPI):
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
 
     def clear_interrupt(self) -> None:
-        pass
+        self.write_u8(_REG_IRQ_FLAGS1, 0xFF)
+        self.write_u8(_REG_IRQ_FLAGS2, 0xFF)
 
     def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
         rfm69_payload = bytearray(1)
