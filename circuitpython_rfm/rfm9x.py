@@ -600,4 +600,6 @@ class RFM9x(RFMSPI):
 
             # clear interrupt
             self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        if fifo_length < 5:
+             packet = None
         return packet

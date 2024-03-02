@@ -170,30 +170,19 @@ class RFM9xFSK(RFMSPI):
     """
 
     operation_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, bits=3)
-
     low_frequency_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=3, bits=1)
-
     modulation_type = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=5, bits=2)
-
     modulation_shaping = RFMSPI.RegisterBits(_RF95_REG_0A_PA_RAMP, offset=5, bits=2)
     # Long range/LoRa mode can only be set in sleep mode!
     long_range_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=7, bits=1)
-
     sync_on = RFMSPI.RegisterBits(_RF95_REG_27_SYNC_CONFIG, offset=4, bits=1)
     sync_size = RFMSPI.RegisterBits(_RF95_REG_27_SYNC_CONFIG, offset=0, bits=3)
     output_power = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, bits=4)
-
     max_power = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, offset=4, bits=3)
-
     pa_select = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, offset=7, bits=1)
-
     pa_dac = RFMSPI.RegisterBits(_RF95_REG_4D_PA_DAC, bits=3)
-
     dio0_mapping = RFMSPI.RegisterBits(_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
-
     lna_boost_hf = RFMSPI.RegisterBits(_RF95_REG_0C_LNA, offset=0, bits=2)
-
-    # Control bits from the registers of the chip:
     rx_bw_mantissa = RFMSPI.RegisterBits(_RF95_REG_12_RX_BW, offset=3, bits=2)
     rx_bw_exponent = RFMSPI.RegisterBits(_RF95_REG_12_RX_BW, offset=0, bits=3)
     afc_bw_mantissa = RFMSPI.RegisterBits(_RF95_REG_13_AFC_BW, offset=3, bits=2)
@@ -257,7 +246,7 @@ class RFM9xFSK(RFMSPI):
         if frequency > 525:
             self.low_frequency_mode = 0
         # Set mode idle
-        self.idle()  # Enter idle state.
+        self.idle()
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.
         self.write_u8(_RF95_REG_35_FIFO_THRESH, 0b10001111)
