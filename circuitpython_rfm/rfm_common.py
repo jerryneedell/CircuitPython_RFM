@@ -81,18 +81,7 @@ def check_timeout(flag: Callable, limit: float) -> bool:
 
 
 
-class RFM:  # pylint: disable-msg=no-member
-    """Base class for all RFM display devices
-    """
-
-    def __init__(self) -> None:
-        self.init()
-
-    def init(self) -> None:
-        """Run the initialization commands."""
-        pass
-
-class RFMSPI(RFM):
+class RFMSPI():
     """Base class for SPI type devices"""
 
     class RegisterBits:
