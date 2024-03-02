@@ -81,7 +81,7 @@ def check_timeout(flag: Callable, limit: float) -> bool:
 
 
 
-class RFMSPI():
+class RFMSPI:
     """Base class for SPI type devices"""
 
     class RegisterBits:
@@ -140,12 +140,9 @@ class RFMSPI():
         self.spi_device = spi_device.SPIDevice(
             spi, cs, baudrate=baudrate, polarity=polarity, phase=phase
         )
-        #self.rst = rst
-        #if self.rst:
-        #    self.rst.switch_to_output(value=0)
-        #    self.reset()
-        super().__init__()
-
+        self.last_rssi=None
+        self.last_snr=None
+        self.flags=None
     # pylint: enable-msg=too-many-arguments
 
     # Global buffer for SPI commands
