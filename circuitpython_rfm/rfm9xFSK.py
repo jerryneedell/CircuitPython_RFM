@@ -462,12 +462,12 @@ class RFM9xFSK(RFMSPI):
             self.output_power = (val + 1) & 0x0F
 
     @property
-    def rssi(self) -> int:
+    def rssi(self) -> float:
         """The received strength indicator (in dBm) of the last received message."""
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
         raw_rssi = self.read_u8(_RF95_REG_11_RSSI_VALUE)
-        return -raw_rssi//2
+        return -raw_rssi/2.0
 
 
     @property
