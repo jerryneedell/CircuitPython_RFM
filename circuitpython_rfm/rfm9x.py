@@ -112,7 +112,6 @@ TX_MODE = 0b011
 FS_RX_MODE = 0b100
 RX_MODE = 0b101
 
-
 # pylint: disable=too-many-instance-attributes
 class RFM9x(RFMSPI):
     """Interface to a RFM95/6/7/8 LoRa radio module.  Allows sending and
