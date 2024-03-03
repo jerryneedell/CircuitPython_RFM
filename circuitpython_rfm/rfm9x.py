@@ -17,7 +17,6 @@ from micropython import const
 
 from circuitpython_rfm.rfm_common import RFMSPI
 
-
 try:
     import digitalio
     import busio
@@ -111,6 +110,7 @@ FS_TX_MODE = 0b010
 TX_MODE = 0b011
 FS_RX_MODE = 0b100
 RX_MODE = 0b101
+
 
 # pylint: disable=too-many-instance-attributes
 class RFM9x(RFMSPI):
