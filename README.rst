@@ -1,7 +1,7 @@
 Introduction
 ============
 
-THIS IS AN EARLY WORK IN PROGRESS - DO NOT ATTEMPT TO  USE
+THIS IS AN EARLY WORK IN PROGRESS - breaking changes may happen at any time.
 
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
