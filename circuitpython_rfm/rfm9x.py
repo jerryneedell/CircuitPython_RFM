@@ -17,6 +17,7 @@ from micropython import const
 
 from circuitpython_rfm.rfm_common import RFMSPI
 
+
 try:
     import digitalio
     import busio
@@ -512,8 +513,7 @@ class RFM9x(RFMSPI):
         """Clear Interrupt flags"""
         self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
-    # pylint: disable=unused-argument
-    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
+    def fill_fifo(self, payload: bytearray) -> None:
         """len_data is not used but is here for compatibility with rfm69
         Fill the FIFO with a packet to send"""
         self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
@@ -521,8 +521,6 @@ class RFM9x(RFMSPI):
         self.write_from(_RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
         self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
-
-    # pylint: enable=unused-argument
 
     def read_fifo(self) -> bytearray:
         """Read the data from the FIFO."""

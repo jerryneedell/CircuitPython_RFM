@@ -574,14 +574,14 @@ class RFM69(RFMSPI):
         self.write_u8(_REG_IRQ_FLAGS1, 0xFF)
         self.write_u8(_REG_IRQ_FLAGS2, 0xFF)
 
-    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
+    def fill_fifo(self, payload: bytearray) -> None:
         """Write the payload to the FIFO."""
-        rfm69_payload = bytearray(1)
-        rfm69_payload[0] = 4 + len_data
+        complete_payload = bytearray(1)  # prepend packet length to payload
+        complete_payload[0] = len(payload)
         # put the payload lengthe in the beginning of the packet for RFM69
-        rfm69_payload = rfm69_payload + payload
+        complete_payload = complete_payload + payload
         # Write payload to transmit fifo
-        self.write_from(_REG_FIFO, rfm69_payload)
+        self.write_from(_REG_FIFO, complete_payload)
 
     def read_fifo(self) -> bytearray:
         """Read the packet from the FIFO."""

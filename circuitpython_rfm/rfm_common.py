@@ -296,8 +296,7 @@ class RFMSPI:
         else:  # use kwarg
             payload[3] = flags
         payload = payload + data
-        # put the payload lengthe in the beginning of the packet for RFM69
-        self.fill_fifo(payload, len(data))
+        self.fill_fifo(payload)
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for packet_sent interrupt with explicit polling (not ideal but

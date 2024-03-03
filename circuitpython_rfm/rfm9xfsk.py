@@ -496,14 +496,14 @@ class RFM9xFSK(RFMSPI):
         self.write_u8(_RF95_REG_3E_IRQ_FLAGS_1, 0xFF)
         self.write_u8(_RF95_REG_3F_IRQ_FLAGS_2, 0xFF)
 
-    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
-        """Write payload to the FIFO"""
-        rfm95_payload = bytearray(1)
-        rfm95_payload[0] = 4 + len_data
+    def fill_fifo(self, payload: bytearray) -> None:
+        """Write the payload to the FIFO."""
+        complete_payload = bytearray(1)  # prepend packet length to payload
+        complete_payload[0] = len(payload)
         # put the payload lengthe in the beginning of the packet for RFM69
-        rfm95_payload = rfm95_payload + payload
+        complete_payload = complete_payload + payload
         # Write payload to transmit fifo
-        self.write_from(_RF95_REG_00_FIFO, rfm95_payload)
+        self.write_from(_RF95_REG_00_FIFO, complete_payload)
 
     def read_fifo(self) -> bytearray:
         """Read the data from the FIFO."""
