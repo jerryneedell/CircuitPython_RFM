@@ -194,13 +194,13 @@ class RFM69(RFMSPI):
         preamble_length: int = 4,
         encryption_key: Optional[bytes] = None,
         high_power: bool = True,
-        baudrate: int = 2000000
+        baudrate: int = 2000000,
+        crc: bool = True
     ) -> None:
         super().__init__(spi, cs, baudrate=baudrate)
 
         self.module = "RFM69"
         self.max_packet_length = 60
-        self._tx_power = 13
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
@@ -239,7 +239,10 @@ class RFM69(RFMSPI):
         self.packet_format = 1  # Variable length.
         self.dc_free = 0b10  # Whitening
         # Set transmit power to 13 dBm, a safe value any module supports.
+        self._tx_power = None
         self.tx_power = 13
+        # Default to enable CRC checking on incoming packets.
+        self.enable_crc = crc
         self.snr = None
 
     def reset(self) -> None:
