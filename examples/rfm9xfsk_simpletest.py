@@ -6,7 +6,7 @@
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xFSK
+from circuitpython_rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -20,19 +20,19 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9xFSK = rfm9xFSK.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # Print out some chip state:
-print("Temperature: {0}C".format(rfm9xFSK.temperature))
-print("Frequency: {0}mhz".format(rfm9xFSK.frequency_mhz))
-print("Bit rate: {0}kbit/s".format(rfm9xFSK.bitrate / 1000))
-print("Frequency deviation: {0}hz".format(rfm9xFSK.frequency_deviation))
+print("Temperature: {0}C".format(rfm9xfsk.temperature))
+print("Frequency: {0}mhz".format(rfm9xfsk.frequency_mhz))
+print("Bit rate: {0}kbit/s".format(rfm9xfsk.bitrate / 1000))
+print("Frequency deviation: {0}hz".format(rfm9xfsk.frequency_deviation))
 
 # Send a packet.  Note you can only send a packet up to 60 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
 # call will wait for the previous one to finish before continuing.
-rfm9xFSK.send(bytes("Hello world!\r\n", "utf-8"))
+rfm9xfsk.send(bytes("Hello world!\r\n", "utf-8"))
 print("Sent hello world message!")
 
 # Wait to receive packets.  Note that this library can't receive data at a fast
@@ -41,9 +41,9 @@ print("Sent hello world message!")
 # and receiving a single message at a time.
 print("Waiting for packets...")
 while True:
-    packet = rfm9xFSK.receive()
+    packet = rfm9xfsk.receive()
     # Optionally change the receive timeout from its default of 0.5 seconds:
-    # packet = rfm9xFSK.receive(timeout=5.0)
+    # packet = rfm9xfsk.receive(timeout=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is None:
         # Packet has not been received
@@ -60,6 +60,6 @@ while True:
             packet_text = str(packet, "ascii")
             print("Received (ASCII): {0}".format(packet_text))
         except UnicodeDecodeError:
-            print("Hex data: ",[hex(x) for x in packet])
-        rssi = rfm9xFSK.last_rssi
+            print("Hex data: ", [hex(x) for x in packet])
+        rssi = rfm9xfsk.last_rssi
         print("Received signal strength: {0} dB".format(rssi))

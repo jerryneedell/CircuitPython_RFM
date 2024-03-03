@@ -8,7 +8,7 @@ import time
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xFSK
+from circuitpython_rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -22,7 +22,7 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9xFSK = rfm9xFSK.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 
 # set the time interval (seconds) for sending packets
@@ -33,13 +33,13 @@ transmit_interval = 5
 
 # You can however adjust the transmit power (in dB).  The default is 13 dB but
 # high power radios like the RFM95 can go up to 23 dB:
-rfm9xFSK.tx_power = 23
+rfm9xfsk.tx_power = 23
 
 
 # initialize counter
 counter = 0
 # send a broadcast mesage
-rfm9xFSK.send(bytes("message number {}".format(counter), "UTF-8"))
+rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -48,7 +48,7 @@ send_reading = False
 time_now = time.monotonic()
 while True:
     # Look for a new packet - wait up to 2 seconds:
-    packet = rfm9xFSK.receive(timeout=2.0)
+    packet = rfm9xfsk.receive(timeout=2.0)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!
@@ -61,4 +61,4 @@ while True:
         # clear flag to send data
         send_reading = False
         counter = counter + 1
-        rfm9xFSK.send(bytes("message number {}".format(counter), "UTF-8"))
+        rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))

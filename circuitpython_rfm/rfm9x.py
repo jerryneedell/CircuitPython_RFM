@@ -12,20 +12,16 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 
 * Author(s): Tony DiCola, Jerry Needell
 """
-import random
 import time
-import sys
 from micropython import const
 
 from circuitpython_rfm.rfm_common import RFMSPI
-from circuitpython_rfm.rfm_common import check_timeout
 
 
 try:
-    from typing import Optional, Type
-    from circuitpython_typing import WriteableBuffer, ReadableBuffer
     import digitalio
     import busio
+
     try:
         from typing import Literal
     except ImportError:
@@ -116,6 +112,8 @@ TX_MODE = 0b011
 FS_RX_MODE = 0b100
 RX_MODE = 0b101
 
+
+# pylint: disable=too-many-instance-attributes
 class RFM9x(RFMSPI):
     """Interface to a RFM95/6/7/8 LoRa radio module.  Allows sending and
     receiving bytes of data in long range LoRa mode at a support board frequency
@@ -179,7 +177,9 @@ class RFM9x(RFMSPI):
 
     auto_ifon = RFMSPI.RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
 
-    detection_optimize = RFMSPI.RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3)
+    detection_optimize = RFMSPI.RegisterBits(
+        _RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3
+    )
 
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
@@ -196,18 +196,13 @@ class RFM9x(RFMSPI):
         agc: bool = False,
         crc: bool = True
     ) -> None:
-        super().__init__(
-            spi,
-            cs,
-            rst=rst,
-            baudrate = baudrate
-        )
-        self.module='RFM9X'
+        super().__init__(spi, cs, baudrate=baudrate)
+        self.module = "RFM9X"
         self.max_packet_length = 252
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
-        #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
+        # self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output - initially High
         # This line is pulled low as an output quickly to trigger a reset.
         self._rst = rst
@@ -261,7 +256,6 @@ class RFM9x(RFMSPI):
         time.sleep(0.0001)  # 100 us
         self._rst.value = True  # set Reset High
         time.sleep(0.005)  # 5 ms
-
 
     def idle(self) -> None:
         """Enter idle standby mode."""
@@ -507,7 +501,6 @@ class RFM9x(RFMSPI):
         """crc status"""
         return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
-
     def packet_sent(self) -> bool:
         """Transmit status"""
         return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
@@ -517,19 +510,23 @@ class RFM9x(RFMSPI):
         return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
 
     def clear_interrupt(self) -> None:
+        """Clear Interrupt flags"""
         self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
-    def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
-        # len_data is not used but is here for compatibility with rfm69
-        # Fill the FIFO with a packet to send.
+    # pylint: disable=unused-argument
+    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
+        """len_data is not used but is here for compatibility with rfm69
+        Fill the FIFO with a packet to send"""
         self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Write payload.
         self.write_from(_RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
         self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
 
-    def read_FIFO(self) -> bytearray:
-        # Read the data from the FIFO.
+    # pylint: enable=unused-argument
+
+    def read_fifo(self) -> bytearray:
+        """Read the data from the FIFO."""
         # Read the length of the FIFO.
         fifo_length = self.read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
         # Handle if the received packet is too small to include the 4 byte
@@ -544,5 +541,5 @@ class RFM9x(RFMSPI):
             # clear interrupt
             self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         if fifo_length < 5:
-             packet = None
+            packet = None
         return packet

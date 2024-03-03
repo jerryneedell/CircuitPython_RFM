@@ -6,7 +6,7 @@
 `adafruit_rfm9xFSK`
 ====================================================
 
-CircuitPython module for the RFM95/6/7/8 FSK 433/915mhz radio modules. 
+CircuitPython module for the RFM95/6/7/8 FSK 433/915mhz radio modules.
 
 * Author(s): Jerry Needell
 """
@@ -14,14 +14,13 @@ import time
 from micropython import const
 
 from circuitpython_rfm.rfm_common import RFMSPI
-from circuitpython_rfm.rfm_common import check_timeout
 
 
 try:
-    from typing import Optional, Type
-    from circuitpython_typing import WriteableBuffer, ReadableBuffer
+    from typing import Optional
     import digitalio
     import busio
+
     try:
         from typing import Literal
     except ImportError:
@@ -68,7 +67,7 @@ _RF95_REG_23_RX_DELAY = const(0x23)
 _RF95_REG_24_OSC = const(0x24)
 _RF95_REG_25_PREAMBLE_MSB = const(0x25)
 _RF95_REG_26_PREAMBLE_LSB = const(0x26)
-_RF95_REG_27_SYNC_CONFIG  = const(0x27)
+_RF95_REG_27_SYNC_CONFIG = const(0x27)
 _RF95_REG_28_SYNC_VALUE_1 = const(0x28)
 _RF95_REG_29_SYNC_VALUE_2 = const(0x29)
 _RF95_REG_2A_SYNC_VALUE_3 = const(0x2A)
@@ -136,6 +135,8 @@ TX_MODE = 0b011
 FS_RX_MODE = 0b100
 RX_MODE = 0b101
 
+
+# pylint: disable=too-many-instance-attributes
 class RFM9xFSK(RFMSPI):
     """Interface to a RFM95/6/7/8 FSK radio module.  Allows sending and
     receiving bytes of data in FSK  mode at a support board frequency
@@ -190,11 +191,12 @@ class RFM9xFSK(RFMSPI):
     packet_format = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=7, bits=1)
     dc_free = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=5, bits=2)
     crc_on = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=4, bits=1)
-    crc_auto_clear_off = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=3, bits=1)
+    crc_auto_clear_off = RFMSPI.RegisterBits(
+        _RF95_REG_30_PACKET_CONFIG_1, offset=3, bits=1
+    )
     address_filter = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=1, bits=2)
     crc_type = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=0, bits=1)
     mode_ready = RFMSPI.RegisterBits(_RF95_REG_3E_IRQ_FLAGS_1, offset=7)
-
 
     def __init__(
         self,
@@ -209,18 +211,13 @@ class RFM9xFSK(RFMSPI):
         baudrate: int = 5000000,
         crc: bool = True
     ) -> None:
-        super().__init__(
-            spi,
-            cs,
-            rst=rst,
-            baudrate = baudrate
-        )
-        self.module='RFM9X'
+        super().__init__(spi, cs, baudrate=baudrate)
+        self.module = "RFM9X"
         self.max_packet_length = 252
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
-        #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
+        # self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output - initially High
         # This line is pulled low as an output quickly to trigger a reset.
         self._rst = rst
@@ -284,7 +281,6 @@ class RFM9xFSK(RFMSPI):
         self._rst.value = True  # set Reset High
         time.sleep(0.005)  # 5 ms
 
-
     def idle(self) -> None:
         """Enter idle standby mode."""
         self.operation_mode = STANDBY_MODE
@@ -323,7 +319,7 @@ class RFM9xFSK(RFMSPI):
         sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
         # according to datasheet.
         sync_word = bytearray(sync_word_length)
-        self.read_into(_RF95_28_REG_SYNC_VALUE_1, sync_word)
+        self.read_into(_RF95_REG_28_SYNC_VALUE_1, sync_word)
         return sync_word
 
     @sync_word.setter
@@ -381,16 +377,14 @@ class RFM9xFSK(RFMSPI):
         temp = self.read_u8(_RF95_REG_3C_TEMP)
         return temp
 
-
-
     @property
     def preamble_length(self) -> int:
         """The length of the preamble for sent and received packets, an unsigned
         16-bit value.  Received packets must match this length or they are
         ignored! Set to 4 to match the RF69.
         """
-        msb = self.read_u8(_RF95_REG_20_PREAMBLE_MSB)
-        lsb = self.read_u8(_RF95_REG_21_PREAMBLE_LSB)
+        msb = self.read_u8(_RF95_REG_25_PREAMBLE_MSB)
+        lsb = self.read_u8(_RF95_REG_26_PREAMBLE_LSB)
         return ((msb << 8) | lsb) & 0xFFFF
 
     @preamble_length.setter
@@ -467,30 +461,27 @@ class RFM9xFSK(RFMSPI):
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
         raw_rssi = self.read_u8(_RF95_REG_11_RSSI_VALUE)
-        return -raw_rssi/2.0
-
+        return -raw_rssi / 2.0
 
     @property
     def enable_crc(self) -> bool:
         """Set to True to enable hardware CRC checking of incoming packets.
         Incoming packets that fail the CRC check are not processed.  Set to
         False to disable CRC checking and process all incoming packets."""
-        return (self.crc_on)
-
+        return self.crc_on
 
     @enable_crc.setter
     def enable_crc(self, val: bool) -> None:
         # Optionally enable CRC checking on incoming packets.
         if val:
             self.crc_on = 1
-            self.crc_type = 0 # use CCITT for RF69 compatibility
+            self.crc_type = 0  # use CCITT for RF69 compatibility
         else:
             self.crc_on = 0
 
     def crc_error(self) -> bool:
         """crc status"""
         return (self.read_u8(_RF95_REG_3F_IRQ_FLAGS_2) & 0x2) >> 1
-
 
     def packet_sent(self) -> bool:
         """Transmit status"""
@@ -501,11 +492,12 @@ class RFM9xFSK(RFMSPI):
         return (self.read_u8(_RF95_REG_3F_IRQ_FLAGS_2) & 0x4) >> 2
 
     def clear_interrupt(self) -> None:
+        """Clear interrupt Flags"""
         self.write_u8(_RF95_REG_3E_IRQ_FLAGS_1, 0xFF)
         self.write_u8(_RF95_REG_3F_IRQ_FLAGS_2, 0xFF)
 
-
-    def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
+    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
+        """Write payload to the FIFO"""
         rfm95_payload = bytearray(1)
         rfm95_payload[0] = 4 + len_data
         # put the payload lengthe in the beginning of the packet for RFM69
@@ -513,8 +505,8 @@ class RFM9xFSK(RFMSPI):
         # Write payload to transmit fifo
         self.write_from(_RF95_REG_00_FIFO, rfm95_payload)
 
-    def read_FIFO(self) -> bytearray:
-        # Read the data from the FIFO.
+    def read_fifo(self) -> bytearray:
+        """Read the data from the FIFO."""
         # Read the length of the FIFO.
         fifo_length = self.read_u8(_RF95_REG_00_FIFO)
         # Handle if the received packet is too small to include the 4 byte
@@ -524,5 +516,5 @@ class RFM9xFSK(RFMSPI):
             # read the packet
             self.read_into(_RF95_REG_00_FIFO, packet, fifo_length)
         if fifo_length < 5:
-             packet = None
+            packet = None
         return packet

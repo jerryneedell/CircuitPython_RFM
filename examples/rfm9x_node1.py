@@ -25,7 +25,6 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 
-
 # set the time interval (seconds) for sending packets
 transmit_interval = 10
 

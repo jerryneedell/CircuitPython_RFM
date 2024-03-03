@@ -18,14 +18,11 @@ receiving of packets with RFM69 series radios (433/915Mhz).
 
 * Author(s): Tony DiCola, Jerry Needell
 """
-import random
 import time
-import sys
 from micropython import const
 
 from circuitpython_rfm.rfm_common import RFMSPI
 from circuitpython_rfm.rfm_common import ticks_diff
-from circuitpython_rfm.rfm_common import check_timeout
 
 HAS_SUPERVISOR = False
 
@@ -39,14 +36,9 @@ except ImportError:
 
 
 try:
-    from typing import Callable, Optional, Type
-    from circuitpython_typing import WriteableBuffer, ReadableBuffer
+    from typing import Optional
     import digitalio
     import busio
-    try:
-        from typing import Literal
-    except ImportError:
-        from typing_extensions import Literal
 
 except ImportError:
     pass
@@ -117,6 +109,9 @@ FS_MODE = 0b010
 TX_MODE = 0b011
 RX_MODE = 0b100
 
+
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-public-methods
 class RFM69(RFMSPI):
     """Interface to a RFM69 series packet radio.  Allows simple sending and
     receiving of wireless data at supported frequencies of the radio
@@ -199,22 +194,16 @@ class RFM69(RFMSPI):
         preamble_length: int = 4,
         encryption_key: Optional[bytes] = None,
         high_power: bool = True,
-        baudrate: int = 2000000,
-        crc: bool = True
+        baudrate: int = 2000000
     ) -> None:
-        super().__init__(
-            spi,
-            cs,
-            rst=rst,
-            baudrate = baudrate
-        )
+        super().__init__(spi, cs, baudrate=baudrate)
 
-        self.module='RFM69'
+        self.module = "RFM69"
         self.max_packet_length = 60
         self._tx_power = 13
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
-        #self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
+        # self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output that's low.
         self._rst = rst
         self._rst.switch_to_output(value=False)
@@ -260,8 +249,6 @@ class RFM69(RFMSPI):
         time.sleep(0.0001)  # 100 us
         self._rst.value = False
         time.sleep(0.005)  # 5 ms
-
-
 
     def disable_boost(self) -> None:
         """Disable preamp boost."""
@@ -555,14 +542,12 @@ class RFM69(RFMSPI):
         self.write_u8(_REG_FDEV_MSB, fdev >> 8)
         self.write_u8(_REG_FDEV_LSB, fdev & 0xFF)
 
-
     @property
     def enable_crc(self) -> bool:
         """Set to True to enable hardware CRC checking of incoming packets.
         Incoming packets that fail the CRC check are not processed.  Set to
         False to disable CRC checking and process all incoming packets."""
-        return (self.crc_on)
-
+        return self.crc_on
 
     @enable_crc.setter
     def enable_crc(self, val: bool) -> None:
@@ -576,8 +561,6 @@ class RFM69(RFMSPI):
         """crc status"""
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x2) >> 1
 
-
-
     def packet_sent(self) -> bool:
         """Transmit status"""
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x8) >> 3
@@ -587,10 +570,12 @@ class RFM69(RFMSPI):
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
 
     def clear_interrupt(self) -> None:
+        """Clear interrupt flags"""
         self.write_u8(_REG_IRQ_FLAGS1, 0xFF)
         self.write_u8(_REG_IRQ_FLAGS2, 0xFF)
 
-    def fill_FIFO(self,payload: bytearray,len_data: int) -> None:
+    def fill_fifo(self, payload: bytearray, len_data: int) -> None:
+        """Write the payload to the FIFO."""
         rfm69_payload = bytearray(1)
         rfm69_payload[0] = 4 + len_data
         # put the payload lengthe in the beginning of the packet for RFM69
@@ -598,8 +583,8 @@ class RFM69(RFMSPI):
         # Write payload to transmit fifo
         self.write_from(_REG_FIFO, rfm69_payload)
 
-    def read_FIFO(self) -> bytearray:
-        # Read the data from the FIFO.
+    def read_fifo(self) -> bytearray:
+        """Read the packet from the FIFO."""
         # Read the length of the FIFO.
         fifo_length = self.read_u8(_REG_FIFO)
         # Handle if the received packet is too small to include the 4 byte
@@ -609,5 +594,5 @@ class RFM69(RFMSPI):
             # read the packet
             self.read_into(_REG_FIFO, packet, fifo_length)
         if fifo_length < 5:
-             packet = None
+            packet = None
         return packet

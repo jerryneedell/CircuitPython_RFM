@@ -6,12 +6,12 @@
 
 * Author(s): Jerry Needell
 """
-
 import time
 import random
+from adafruit_bus_device import spi_device
 
 try:
-    from typing import Callable, Optional, Type, Union, Tuple, List, Any, ByteString
+    from typing import Callable, Optional, Type
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
     import digitalio
     import busio
@@ -31,11 +31,9 @@ try:
 except ImportError:
     pass
 
-from adafruit_bus_device import spi_device
 
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
-
 
 
 # RadioHead specific compatibility constants.
@@ -48,11 +46,11 @@ _RH_FLAGS_ACK = const(0x80)
 _RH_FLAGS_RETRY = const(0x40)
 
 
-
 # supervisor.ticks_ms() contants
 _TICKS_PERIOD = const(1 << 29)
 _TICKS_MAX = const(_TICKS_PERIOD - 1)
 _TICKS_HALFPERIOD = const(_TICKS_PERIOD // 2)
+
 
 def ticks_diff(ticks1: int, ticks2: int) -> int:
     """Compute the signed difference between two ticks values
@@ -79,12 +77,13 @@ def check_timeout(flag: Callable, limit: float) -> bool:
     return timed_out
 
 
-
-
+# pylint: disable=too-many-instance-attributes
 class RFMSPI:
     """Base class for SPI type devices"""
 
     class RegisterBits:
+        """Simplify register access"""
+
         # Class to simplify access to the many configuration bits avaialable
         # on the chip's registers.  This is a subclass here instead of using
         # a higher level module to increase the efficiency of memory usage
@@ -126,19 +125,17 @@ class RFMSPI:
             reg_value |= (val & 0xFF) << self._offset
             obj.write_u8(self._address, reg_value)
 
-
     # pylint: disable-msg=too-many-arguments
     def __init__(
         self,
         spi: busio.SPI,
-        cs: digitalio.DigitalInOut,
-        rst: Optional[digitalio.DigitalInOut] = None,
+        cs_pin: digitalio.DigitalInOut,
         baudrate: int = 5000000,
         polarity: int = 0,
-        phase: int = 0
+        phase: int = 0,
     ):
         self.spi_device = spi_device.SPIDevice(
-            spi, cs, baudrate=baudrate, polarity=polarity, phase=phase
+            spi, cs_pin, baudrate=baudrate, polarity=polarity, phase=phase
         )
         # initialize last RSSI reading
         self.last_rssi = 0.0
@@ -197,20 +194,20 @@ class RFMSPI:
            Fourth byte of the RadioHead header.
         """
         self.crc_error_count = 0
+
     # pylint: enable-msg=too-many-arguments
 
     # Global buffer for SPI commands
     _BUFFER = bytearray(4)
-
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
     def read_into(
         self, address: int, buf: WriteableBuffer, length: Optional[int] = None
     ) -> None:
-        # Read a number of bytes from the specified address into the provided
-        # buffer.  If length is not specified (the default) the entire buffer
-        # will be filled.
+        """Read a number of bytes from the specified address into the provided
+        buffer.  If length is not specified (the default) the entire buffer
+        will be filled."""
         if length is None:
             length = len(buf)
         with self.spi_device as device:
@@ -220,16 +217,16 @@ class RFMSPI:
             device.readinto(buf, end=length)
 
     def read_u8(self, address: int) -> int:
-        # Read a single byte from the provided address and return it.
+        """Read a single byte from the provided address and return it."""
         self.read_into(address, self._BUFFER, length=1)
         return self._BUFFER[0]
 
     def write_from(
         self, address: int, buf: ReadableBuffer, length: Optional[int] = None
     ) -> None:
-        # Write a number of bytes to the provided address and taken from the
-        # provided buffer.  If no length is specified (the default) the entire
-        # buffer is written.
+        """Write a number of bytes to the provided address and taken from the
+        provided buffer.  If no length is specified (the default) the entire
+        buffer is written."""
         if length is None:
             length = len(buf)
         with self.spi_device as device:
@@ -239,23 +236,14 @@ class RFMSPI:
             device.write(buf, end=length)
 
     def write_u8(self, address: int, val: int) -> None:
-        # Write a byte register to the chip.  Specify the 7-bit address and the
-        # 8-bit value to write to that address.
+        """Write a byte register to the chip.  Specify the 7-bit address and the
+        8-bit value to write to that address."""
         with self.spi_device as device:
             self._BUFFER[0] = (
                 address | 0x80
             ) & 0xFF  # Set top bit to 1 to indicate a write.
             self._BUFFER[1] = val & 0xFF
             device.write(self._BUFFER, end=2)
-
-    #def reset(self) -> None:
-    #    """Perform a reset of the chip."""
-    #    # See section 7.2.2 of the datasheet for reset description.
-    #    self.rst.value = True  # Set Reset Low
-    #    time.sleep(0.0001)  # 100 us
-    #    self.rst.value = False  # set Reset High
-    #    time.sleep(0.005)  # 5 ms
-
 
     # pylint: disable=too-many-branches
     def send(
@@ -309,7 +297,7 @@ class RFMSPI:
             payload[3] = flags
         payload = payload + data
         # put the payload lengthe in the beginning of the packet for RFM69
-        self.fill_FIFO(payload,len(data))
+        self.fill_fifo(payload, len(data))
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for packet_sent interrupt with explicit polling (not ideal but
@@ -361,7 +349,6 @@ class RFMSPI:
         self.flags = 0  # clear flags
         return got_ack
 
-
     def receive(
         self,
         *,
@@ -407,7 +394,7 @@ class RFMSPI:
             if self.enable_crc and self.crc_error():
                 self.crc_error_count += 1
             else:
-                packet = self.read_FIFO()
+                packet = self.read_fifo()
                 if packet is not None:
                     if (
                         self.node != _RH_BROADCAST_ADDRESS

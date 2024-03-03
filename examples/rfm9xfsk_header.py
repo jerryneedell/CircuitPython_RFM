@@ -7,7 +7,7 @@
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xFSK
+from circuitpython_rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -21,19 +21,19 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9xFSK = rfm9xFSK.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # Wait to receive packets.
 print("Waiting for packets...")
 # initialize flag and timer
 while True:
     # Look for a new packet: only accept if addresses to my_node
-    packet = rfm9xFSK.receive(with_header=True)
+    packet = rfm9xfsk.receive(with_header=True)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:]])
         print("Received (raw payload): {0}".format(packet[4:]))
-        print("RSSI: {0}".format(rfm9xFSK.last_rssi))
+        print("RSSI: {0}".format(rfm9xfsk.last_rssi))
         # send reading after any packet received
