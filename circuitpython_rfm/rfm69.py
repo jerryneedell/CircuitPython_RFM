@@ -72,6 +72,8 @@ _REG_PREAMBLE_MSB = const(0x2C)
 _REG_PREAMBLE_LSB = const(0x2D)
 _REG_SYNC_CONFIG = const(0x2E)
 _REG_SYNC_VALUE1 = const(0x2F)
+_REG_NODE_ADDR = const(0x39)
+_REG_BROADCAST_ADDR = const(0x3A)
 _REG_PACKET_CONFIG1 = const(0x37)
 _REG_FIFO_THRESH = const(0x3C)
 _REG_PACKET_CONFIG2 = const(0x3D)
@@ -563,6 +565,41 @@ class RFM69(RFMSPI):
     def crc_error(self) -> bool:
         """crc status"""
         return (self.read_u8(_REG_IRQ_FLAGS2) & 0x2) >> 1
+
+    @property
+    def enable_address_filter(self) -> bool:
+        """Set to True to enable address filtering.
+        Incoming packets that do no match the node address  or broadcast address
+        will be ignored."""
+        return self.address_filter
+
+    @enable_address_filter.setter
+    def enable_fsk_address_filter(self, val: bool) -> None:
+        # Enable address filtering  on incoming packets.
+        if val:
+            self.address_filter = 2  # accept node address or broadcast address
+        else:
+            self.address_filter = 0
+
+    @property
+    def fsk_node_address(self) -> int:
+        """Node Address for Address Filtering"""
+        return self.read_u8(_REG_NODE_ADDR)
+
+    @fsk_node_address.setter
+    def fsk_node_address(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_REG_NODE_ADDR, val)
+
+    @property
+    def fsk_broadcast_address(self) -> int:
+        """Node Address for Address Filtering"""
+        return self.read_u8(_REG_BROADCAST_ADDR)
+
+    @fsk_broadcast_address.setter
+    def fsk_broadcast_address(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_REG_BROADCAST_ADDR, val)
 
     def packet_sent(self) -> bool:
         """Transmit status"""

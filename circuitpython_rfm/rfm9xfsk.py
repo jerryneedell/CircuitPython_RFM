@@ -80,7 +80,7 @@ _RF95_REG_30_PACKET_CONFIG_1 = const(0x30)
 _RF95_REG_31_PACKET_CONFIG_2 = const(0x31)
 _RF95_REG_32_PAYLOAD_LENGTH = const(0x32)
 _RF95_REG_33_NODE_ADDR = const(0x33)
-_RF95_REG_34_BCST_ADDR = const(0x34)
+_RF95_REG_34_BROADCAST_ADDR = const(0x34)
 _RF95_REG_35_FIFO_THRESH = const(0x35)
 _RF95_REG_36_SEQ_CFG_1 = const(0x36)
 _RF95_REG_37_SEQ_CFG_2 = const(0x37)
@@ -137,6 +137,7 @@ RX_MODE = 0b101
 
 
 # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-public-methods
 class RFM9xFSK(RFMSPI):
     """Interface to a RFM95/6/7/8 FSK radio module.  Allows sending and
     receiving bytes of data in FSK  mode at a support board frequency
@@ -482,6 +483,41 @@ class RFM9xFSK(RFMSPI):
     def crc_error(self) -> bool:
         """crc status"""
         return (self.read_u8(_RF95_REG_3F_IRQ_FLAGS_2) & 0x2) >> 1
+
+    @property
+    def enable_address_filter(self) -> bool:
+        """Set to True to enable address filtering.
+        Incoming packets that do no match the node address  or broadcast address
+        will be ignored."""
+        return self.address_filter
+
+    @enable_address_filter.setter
+    def enable_address_filter(self, val: bool) -> None:
+        # Enable address filtering  on incoming packets.
+        if val:
+            self.address_filter = 2  # accept node address or broadcast address
+        else:
+            self.address_filter = 0
+
+    @property
+    def fsk_node_address(self) -> int:
+        """Node Address for Address Filtering"""
+        return self.read_u8(_RF95_REG_33_NODE_ADDR)
+
+    @fsk_node_address.setter
+    def fsk_node_address(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_RF95_REG_33_NODE_ADDR, val)
+
+    @property
+    def fsk_broadcast_address(self) -> int:
+        """Node Address for Address Filtering"""
+        return self.read_u8(_RF95_REG_34_BROADCAST_ADDR)
+
+    @fsk_broadcast_address.setter
+    def fsk_broadcast_address(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_RF95_REG_34_BROADCAST_ADDR, val)
 
     def packet_sent(self) -> bool:
         """Transmit status"""

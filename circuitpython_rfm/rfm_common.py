@@ -78,6 +78,7 @@ def check_timeout(flag: Callable, limit: float) -> bool:
 
 
 # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-nested-blocks
 class RFMSPI:
     """Base class for SPI type devices"""
 
@@ -193,6 +194,9 @@ class RFMSPI:
            Lower 4 bits may be used to pass information.
            Fourth byte of the RadioHead header.
         """
+        self.radiohead = True
+        """Enable RadioHead compatibility"""
+
         self.crc_error_count = 0
 
     # pylint: enable-msg=too-many-arguments
@@ -278,24 +282,27 @@ class RFMSPI:
         # pylint: enable=len-as-condition
         self.idle()  # Stop receiving to clear FIFO and keep it clear.
         # Combine header and data to form payload
-        payload = bytearray(4)
-        if destination is None:  # use attribute
-            payload[0] = self.destination
-        else:  # use kwarg
-            payload[0] = destination
-        if node is None:  # use attribute
-            payload[1] = self.node
-        else:  # use kwarg
-            payload[1] = node
-        if identifier is None:  # use attribute
-            payload[2] = self.identifier
-        else:  # use kwarg
-            payload[2] = identifier
-        if flags is None:  # use attribute
-            payload[3] = self.flags
-        else:  # use kwarg
-            payload[3] = flags
-        payload = payload + data
+        if self.radiohead:
+            payload = bytearray(4)
+            if destination is None:  # use attribute
+                payload[0] = self.destination
+            else:  # use kwarg
+                payload[0] = destination
+            if node is None:  # use attribute
+                payload[1] = self.node
+            else:  # use kwarg
+                payload[1] = node
+            if identifier is None:  # use attribute
+                payload[2] = self.identifier
+            else:  # use kwarg
+                payload[2] = identifier
+            if flags is None:  # use attribute
+                payload[3] = self.flags
+            else:  # use kwarg
+                payload[3] = flags
+            payload = payload + data
+        else:
+            payload = data
         self.fill_fifo(payload)
         # Turn on transmit mode to send out the packet.
         self.transmit()
@@ -317,6 +324,8 @@ class RFMSPI:
         The packet header is automatically generated.
         If enabled, the packet transmission will be retried on failure
         """
+        if not self.radiohead:
+            raise RuntimeError("send_with_ack onl suppoted in RadioHead mode")
         if self.ack_retries:
             retries_remaining = self.ack_retries
         else:
@@ -370,6 +379,10 @@ class RFMSPI:
         The payload then begins at packet[4].
         If with_ack is True, send an ACK after receipt (Reliable Datagram mode)
         """
+        if not self.radiohead and (with_header or with_ack):
+            raise RuntimeError(
+                "with_header and with_ack only supported for RadioHead mode"
+            )
         timed_out = False
         if timeout is None:
             timeout = self.receive_timeout
@@ -394,41 +407,42 @@ class RFMSPI:
                 self.crc_error_count += 1
             else:
                 packet = self.read_fifo()
-                if packet is not None:
-                    if (
-                        self.node != _RH_BROADCAST_ADDRESS
-                        and packet[0] != _RH_BROADCAST_ADDRESS
-                        and packet[0] != self.node
-                    ):
-                        packet = None
-                    # send ACK unless this was an ACK or a broadcast
-                    elif (
-                        with_ack
-                        and ((packet[3] & _RH_FLAGS_ACK) == 0)
-                        and (packet[0] != _RH_BROADCAST_ADDRESS)
-                    ):
-                        # delay before sending Ack to give receiver a chance to get ready
-                        if self.ack_delay is not None:
-                            time.sleep(self.ack_delay)
-                        # send ACK packet to sender (data is b'!')
-                        self.send(
-                            b"!",
-                            destination=packet[1],
-                            node=packet[0],
-                            identifier=packet[2],
-                            flags=(packet[3] | _RH_FLAGS_ACK),
-                        )
-                        # reject Retries if we have seen this idetifier from this source before
-                        if (self.seen_ids[packet[1]] == packet[2]) and (
-                            packet[3] & _RH_FLAGS_RETRY
+                if self.radiohead:
+                    if packet is not None:
+                        if (
+                            self.node != _RH_BROADCAST_ADDRESS
+                            and packet[0] != _RH_BROADCAST_ADDRESS
+                            and packet[0] != self.node
                         ):
                             packet = None
-                        else:  # save the packet identifier for this source
-                            self.seen_ids[packet[1]] = packet[2]
-                    if (
-                        not with_header and packet is not None
-                    ):  # skip the header if not wanted
-                        packet = packet[4:]
+                        # send ACK unless this was an ACK or a broadcast
+                        elif (
+                            with_ack
+                            and ((packet[3] & _RH_FLAGS_ACK) == 0)
+                            and (packet[0] != _RH_BROADCAST_ADDRESS)
+                        ):
+                            # delay before sending Ack to give receiver a chance to get ready
+                            if self.ack_delay is not None:
+                                time.sleep(self.ack_delay)
+                            # send ACK packet to sender (data is b'!')
+                            self.send(
+                                b"!",
+                                destination=packet[1],
+                                node=packet[0],
+                                identifier=packet[2],
+                                flags=(packet[3] | _RH_FLAGS_ACK),
+                            )
+                            # reject Retries if we have seen this idetifier from this source before
+                            if (self.seen_ids[packet[1]] == packet[2]) and (
+                                packet[3] & _RH_FLAGS_RETRY
+                            ):
+                                packet = None
+                            else:  # save the packet identifier for this source
+                                self.seen_ids[packet[1]] = packet[2]
+                        if (
+                            not with_header and packet is not None
+                        ):  # skip the header if not wanted
+                            packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
