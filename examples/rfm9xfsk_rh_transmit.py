@@ -24,21 +24,6 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
-print(
-    rfm9xfsk.fsk_node_address,
-    rfm9xfsk.fsk_broadcast_address,
-    rfm9xfsk.enable_address_filter,
-)
-
-rfm9xfsk.radiohead = False
-rfm9xfsk.enable_address_filter = True
-rfm9xfsk.fsk_node_address = 0x2
-rfm9xfsk.fsk_broadcast_address = 0xFF
-print(
-    rfm9xfsk.fsk_node_address,
-    rfm9xfsk.fsk_broadcast_address,
-    rfm9xfsk.enable_address_filter,
-)
 # set the time interval (seconds) for sending packets
 transmit_interval = 5
 

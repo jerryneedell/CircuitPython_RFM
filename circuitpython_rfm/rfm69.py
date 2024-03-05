@@ -574,7 +574,7 @@ class RFM69(RFMSPI):
         return self.address_filter
 
     @enable_address_filter.setter
-    def enable_fsk_address_filter(self, val: bool) -> None:
+    def enable_address_filter(self, val: bool) -> None:
         # Enable address filtering  on incoming packets.
         if val:
             self.address_filter = 2  # accept node address or broadcast address
