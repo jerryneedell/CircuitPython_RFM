@@ -24,12 +24,12 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
+rfm9xfsk.radiohead = False
+rfm9xfsk.enable_address_filter = True
+rfm9xfsk.fsk_node_address = 0x1
+rfm9xfsk.fsk_broadcast_address = 0xFF
 # set the time interval (seconds) for sending packets
 transmit_interval = 5
-
-# set node addresses
-rfm9xfsk.node = 1
-rfm9xfsk.destination = 2
 
 # Note that the radio is configured in LoRa mode so you can't control sync
 # word, encryption, frequency deviation, or other settings!
@@ -42,7 +42,7 @@ rfm9xfsk.tx_power = 23
 # initialize counter
 counter = 0
 # send a broadcast mesage
-rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))
+rfm9xfsk.send(b"\2" + bytes("message number {}".format(counter), "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -64,4 +64,4 @@ while True:
         # clear flag to send data
         send_reading = False
         counter = counter + 1
-        rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))
+        rfm9xfsk.send(b"\2" + bytes("message number {}".format(counter), "UTF-8"))
