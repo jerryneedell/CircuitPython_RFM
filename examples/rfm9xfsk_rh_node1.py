@@ -36,18 +36,17 @@ rfm9xfsk.destination = 2
 
 # You can however adjust the transmit power (in dB).  The default is 13 dB but
 # high power radios like the RFM95 can go up to 23 dB:
-rfm9xfsk.tx_power = 23
+# rfm9xfsk.tx_power = 23
 
 
 # initialize counter
 counter = 0
 # send a broadcast mesage
-rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))
+rfm9xfsk.send(b"\2" + bytes("message number {}".format(counter), "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
 # initialize flag and timer
-send_reading = False
 time_now = time.monotonic()
 while True:
     # Look for a new packet - wait up to 2 seconds:
@@ -61,7 +60,5 @@ while True:
     if time.monotonic() - time_now > transmit_interval:
         # reset timeer
         time_now = time.monotonic()
-        # clear flag to send data
-        send_reading = False
         counter = counter + 1
         rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))

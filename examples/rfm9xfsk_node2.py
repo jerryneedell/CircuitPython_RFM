@@ -4,6 +4,7 @@
 # Example to send a packet periodically
 # Author: Jerry Needell
 #
+import random
 import time
 import board
 import busio
@@ -22,8 +23,8 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
-node = 1
-destination = 2
+node = 2
+destination = 1
 
 rfm9xfsk.radiohead = False
 rfm9xfsk.enable_address_filter = True
@@ -53,14 +54,15 @@ print("Waiting for packets...")
 time_now = time.monotonic()
 while True:
     # Look for a new packet - wait up to 2 seconds:
-    packet = rfm9xfsk.receive(timeout=2.0)
+    packet = rfm9xfsk.receive(timeout=0.5)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw bytes): {0}".format(packet), rfm9xfsk.last_rssi)
-        # clear flag to send data
+    if time.monotonic() - time_now > transmit_interval + random.random():
         counter = counter + 1
         rfm9xfsk.send(
             bytes("message number {}".format(counter), "UTF-8"), destination=destination
         )
+        time_now = time.monotonic()

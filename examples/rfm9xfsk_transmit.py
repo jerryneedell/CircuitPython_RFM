@@ -31,9 +31,9 @@ print(
 )
 
 rfm9xfsk.radiohead = False
-rfm9xfsk.enable_address_filter = True
-rfm9xfsk.fsk_node_address = 0x2
-rfm9xfsk.fsk_broadcast_address = 0xFF
+# rfm9xfsk.enable_address_filter=True
+# rfm9xfsk.fsk_node_address=0x2
+# rfm9xfsk.fsk_broadcast_address=0xff
 print(
     rfm9xfsk.fsk_node_address,
     rfm9xfsk.fsk_broadcast_address,
