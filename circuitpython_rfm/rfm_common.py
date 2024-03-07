@@ -301,6 +301,8 @@ class RFMSPI:
             else:  # use kwarg
                 payload[3] = flags
             payload = payload + data
+        elif destination is not None:  # prepend destination for non RH packets
+            payload = destination.to_bytes(1) + data
         else:
             payload = data
         self.fill_fifo(payload)
