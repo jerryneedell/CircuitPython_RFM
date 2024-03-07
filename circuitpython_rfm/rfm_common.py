@@ -302,7 +302,7 @@ class RFMSPI:
                 payload[3] = flags
             payload = payload + data
         elif destination is not None:  # prepend destination for non RH packets
-            payload = destination.to_bytes(1) + data
+            payload = destination.to_bytes(1, "big") + data
         else:
             payload = data
         self.fill_fifo(payload)
