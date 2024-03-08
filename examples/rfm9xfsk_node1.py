@@ -4,6 +4,7 @@
 # Example to send a packet periodically
 # Author: Jerry Needell
 #
+import random
 import time
 import board
 import busio
@@ -60,6 +61,7 @@ while True:
         # Print out the raw bytes of the packet:
         print("Received (raw bytes): {0}".format(packet), rfm9xfsk.last_rssi)
         # clear flag to send data
+        time.sleep(random.random())
         counter = counter + 1
         rfm9xfsk.send(
             bytes("message number {}".format(counter), "UTF-8"), destination=destination

@@ -26,7 +26,7 @@ rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 
 # set the time interval (seconds) for sending packets
-transmit_interval = 10
+transmit_interval = 2
 
 # set node addresses
 rfm9x.node = 1
@@ -43,7 +43,7 @@ print("Waiting for packets...")
 now = time.monotonic()
 while True:
     # Look for a new packet: only accept if addresses to my_node
-    packet = rfm9x.receive(with_header=True)
+    packet = rfm9x.receive(with_header=True, timeput=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!
