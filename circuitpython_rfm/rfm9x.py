@@ -35,65 +35,65 @@ __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
 # Internal constants:
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
-_RH_RF95_REG_00_FIFO = const(0x00)
-_RH_RF95_REG_01_OP_MODE = const(0x01)
-_RH_RF95_REG_06_FRF_MSB = const(0x06)
-_RH_RF95_REG_07_FRF_MID = const(0x07)
-_RH_RF95_REG_08_FRF_LSB = const(0x08)
-_RH_RF95_REG_09_PA_CONFIG = const(0x09)
-_RH_RF95_REG_0A_PA_RAMP = const(0x0A)
-_RH_RF95_REG_0B_OCP = const(0x0B)
-_RH_RF95_REG_0C_LNA = const(0x0C)
-_RH_RF95_REG_0D_FIFO_ADDR_PTR = const(0x0D)
-_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR = const(0x0E)
-_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR = const(0x0F)
-_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR = const(0x10)
-_RH_RF95_REG_11_IRQ_FLAGS_MASK = const(0x11)
-_RH_RF95_REG_12_IRQ_FLAGS = const(0x12)
-_RH_RF95_REG_13_RX_NB_BYTES = const(0x13)
-_RH_RF95_REG_14_RX_HEADER_CNT_VALUE_MSB = const(0x14)
-_RH_RF95_REG_15_RX_HEADER_CNT_VALUE_LSB = const(0x15)
-_RH_RF95_REG_16_RX_PACKET_CNT_VALUE_MSB = const(0x16)
-_RH_RF95_REG_17_RX_PACKET_CNT_VALUE_LSB = const(0x17)
-_RH_RF95_REG_18_MODEM_STAT = const(0x18)
-_RH_RF95_REG_19_PKT_SNR_VALUE = const(0x19)
-_RH_RF95_REG_1A_PKT_RSSI_VALUE = const(0x1A)
-_RH_RF95_REG_1B_RSSI_VALUE = const(0x1B)
-_RH_RF95_REG_1C_HOP_CHANNEL = const(0x1C)
-_RH_RF95_REG_1D_MODEM_CONFIG1 = const(0x1D)
-_RH_RF95_REG_1E_MODEM_CONFIG2 = const(0x1E)
-_RH_RF95_REG_1F_SYMB_TIMEOUT_LSB = const(0x1F)
-_RH_RF95_REG_20_PREAMBLE_MSB = const(0x20)
-_RH_RF95_REG_21_PREAMBLE_LSB = const(0x21)
-_RH_RF95_REG_22_PAYLOAD_LENGTH = const(0x22)
-_RH_RF95_REG_23_MAX_PAYLOAD_LENGTH = const(0x23)
-_RH_RF95_REG_24_HOP_PERIOD = const(0x24)
-_RH_RF95_REG_25_FIFO_RX_BYTE_ADDR = const(0x25)
-_RH_RF95_REG_26_MODEM_CONFIG3 = const(0x26)
+_RF95_REG_00_FIFO = const(0x00)
+_RF95_REG_01_OP_MODE = const(0x01)
+_RF95_REG_06_FRF_MSB = const(0x06)
+_RF95_REG_07_FRF_MID = const(0x07)
+_RF95_REG_08_FRF_LSB = const(0x08)
+_RF95_REG_09_PA_CONFIG = const(0x09)
+_RF95_REG_0A_PA_RAMP = const(0x0A)
+_RF95_REG_0B_OCP = const(0x0B)
+_RF95_REG_0C_LNA = const(0x0C)
+_RF95_REG_0D_FIFO_ADDR_PTR = const(0x0D)
+_RF95_REG_0E_FIFO_TX_BASE_ADDR = const(0x0E)
+_RF95_REG_0F_FIFO_RX_BASE_ADDR = const(0x0F)
+_RF95_REG_10_FIFO_RX_CURRENT_ADDR = const(0x10)
+_RF95_REG_11_IRQ_FLAGS_MASK = const(0x11)
+_RF95_REG_12_IRQ_FLAGS = const(0x12)
+_RF95_REG_13_RX_NB_BYTES = const(0x13)
+_RF95_REG_14_RX_HEADER_CNT_VALUE_MSB = const(0x14)
+_RF95_REG_15_RX_HEADER_CNT_VALUE_LSB = const(0x15)
+_RF95_REG_16_RX_PACKET_CNT_VALUE_MSB = const(0x16)
+_RF95_REG_17_RX_PACKET_CNT_VALUE_LSB = const(0x17)
+_RF95_REG_18_MODEM_STAT = const(0x18)
+_RF95_REG_19_PKT_SNR_VALUE = const(0x19)
+_RF95_REG_1A_PKT_RSSI_VALUE = const(0x1A)
+_RF95_REG_1B_RSSI_VALUE = const(0x1B)
+_RF95_REG_1C_HOP_CHANNEL = const(0x1C)
+_RF95_REG_1D_MODEM_CONFIG1 = const(0x1D)
+_RF95_REG_1E_MODEM_CONFIG2 = const(0x1E)
+_RF95_REG_1F_SYMB_TIMEOUT_LSB = const(0x1F)
+_RF95_REG_20_PREAMBLE_MSB = const(0x20)
+_RF95_REG_21_PREAMBLE_LSB = const(0x21)
+_RF95_REG_22_PAYLOAD_LENGTH = const(0x22)
+_RF95_REG_23_MAX_PAYLOAD_LENGTH = const(0x23)
+_RF95_REG_24_HOP_PERIOD = const(0x24)
+_RF95_REG_25_FIFO_RX_BYTE_ADDR = const(0x25)
+_RF95_REG_26_MODEM_CONFIG3 = const(0x26)
 
-_RH_RF95_REG_40_DIO_MAPPING1 = const(0x40)
-_RH_RF95_REG_41_DIO_MAPPING2 = const(0x41)
-_RH_RF95_REG_42_VERSION = const(0x42)
+_RF95_REG_40_DIO_MAPPING1 = const(0x40)
+_RF95_REG_41_DIO_MAPPING2 = const(0x41)
+_RF95_REG_42_VERSION = const(0x42)
 
-_RH_RF95_REG_4B_TCXO = const(0x4B)
-_RH_RF95_REG_4D_PA_DAC = const(0x4D)
-_RH_RF95_REG_5B_FORMER_TEMP = const(0x5B)
-_RH_RF95_REG_61_AGC_REF = const(0x61)
-_RH_RF95_REG_62_AGC_THRESH1 = const(0x62)
-_RH_RF95_REG_63_AGC_THRESH2 = const(0x63)
-_RH_RF95_REG_64_AGC_THRESH3 = const(0x64)
+_RF95_REG_4B_TCXO = const(0x4B)
+_RF95_REG_4D_PA_DAC = const(0x4D)
+_RF95_REG_5B_FORMER_TEMP = const(0x5B)
+_RF95_REG_61_AGC_REF = const(0x61)
+_RF95_REG_62_AGC_THRESH1 = const(0x62)
+_RF95_REG_63_AGC_THRESH2 = const(0x63)
+_RF95_REG_64_AGC_THRESH3 = const(0x64)
 
-_RH_RF95_DETECTION_OPTIMIZE = const(0x31)
-_RH_RF95_DETECTION_THRESHOLD = const(0x37)
+_RF95_DETECTION_OPTIMIZE = const(0x31)
+_RF95_DETECTION_THRESHOLD = const(0x37)
 
-_RH_RF95_PA_DAC_DISABLE = const(0x04)
-_RH_RF95_PA_DAC_ENABLE = const(0x07)
+_RF95_PA_DAC_DISABLE = const(0x04)
+_RF95_PA_DAC_ENABLE = const(0x07)
 
 # The crystal oscillator frequency of the module
-_RH_RF95_FXOSC = 32000000.0
+_RF95_FXOSC = 32000000.0
 
 # The Frequency Synthesizer step = RH_RF95_FXOSC / 2^^19
-_RH_RF95_FSTEP = _RH_RF95_FXOSC / 524288
+_RF95_FSTEP = _RF95_FXOSC / 524288
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
@@ -148,38 +148,36 @@ class RFM9x(RFMSPI):
     sender is notified if a packet has potentially been missed.
     """
 
-    operation_mode = RFMSPI.RegisterBits(_RH_RF95_REG_01_OP_MODE, bits=3)
+    operation_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, bits=3)
 
-    low_frequency_mode = RFMSPI.RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=3, bits=1)
+    low_frequency_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=3, bits=1)
 
-    modulation_type = RFMSPI.RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=5, bits=2)
+    modulation_type = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=5, bits=2)
 
     # Long range/LoRa mode can only be set in sleep mode!
-    long_range_mode = RFMSPI.RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=7, bits=1)
+    long_range_mode = RFMSPI.RegisterBits(_RF95_REG_01_OP_MODE, offset=7, bits=1)
 
-    output_power = RFMSPI.RegisterBits(_RH_RF95_REG_09_PA_CONFIG, bits=4)
+    output_power = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, bits=4)
 
-    max_power = RFMSPI.RegisterBits(_RH_RF95_REG_09_PA_CONFIG, offset=4, bits=3)
+    max_power = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, offset=4, bits=3)
 
-    pa_select = RFMSPI.RegisterBits(_RH_RF95_REG_09_PA_CONFIG, offset=7, bits=1)
+    pa_select = RFMSPI.RegisterBits(_RF95_REG_09_PA_CONFIG, offset=7, bits=1)
 
-    pa_dac = RFMSPI.RegisterBits(_RH_RF95_REG_4D_PA_DAC, bits=3)
+    pa_dac = RFMSPI.RegisterBits(_RF95_REG_4D_PA_DAC, bits=3)
 
-    dio0_mapping = RFMSPI.RegisterBits(_RH_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
+    dio0_mapping = RFMSPI.RegisterBits(_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
 
-    auto_agc = RFMSPI.RegisterBits(_RH_RF95_REG_26_MODEM_CONFIG3, offset=2, bits=1)
+    auto_agc = RFMSPI.RegisterBits(_RF95_REG_26_MODEM_CONFIG3, offset=2, bits=1)
 
     low_datarate_optimize = RFMSPI.RegisterBits(
-        _RH_RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1
+        _RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1
     )
 
-    lna_boost_hf = RFMSPI.RegisterBits(_RH_RF95_REG_0C_LNA, offset=0, bits=2)
+    lna_boost_hf = RFMSPI.RegisterBits(_RF95_REG_0C_LNA, offset=0, bits=2)
 
-    auto_ifon = RFMSPI.RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
+    auto_ifon = RFMSPI.RegisterBits(_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
 
-    detection_optimize = RFMSPI.RegisterBits(
-        _RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3
-    )
+    detection_optimize = RFMSPI.RegisterBits(_RF95_DETECTION_OPTIMIZE, offset=0, bits=3)
 
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
@@ -211,7 +209,7 @@ class RFM9x(RFMSPI):
         self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
-        version = self.read_u8(address=_RH_RF95_REG_42_VERSION)
+        version = self.read_u8(address=_RF95_REG_42_VERSION)
         if version != 18:
             raise RuntimeError(
                 "Failed to find rfm9x with expected version -- check wiring"
@@ -228,8 +226,8 @@ class RFM9x(RFMSPI):
         if frequency > 525:
             self.low_frequency_mode = 0
         # Setup entire 256 byte FIFO
-        self.write_u8(_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR, 0x00)
-        self.write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
+        self.write_u8(_RF95_REG_0E_FIFO_TX_BASE_ADDR, 0x00)
+        self.write_u8(_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
         # Set frequency
@@ -286,26 +284,26 @@ class RFM9x(RFMSPI):
         16-bit value.  Received packets must match this length or they are
         ignored! Set to 8 to match the RadioHead RFM95 library.
         """
-        msb = self.read_u8(_RH_RF95_REG_20_PREAMBLE_MSB)
-        lsb = self.read_u8(_RH_RF95_REG_21_PREAMBLE_LSB)
+        msb = self.read_u8(_RF95_REG_20_PREAMBLE_MSB)
+        lsb = self.read_u8(_RF95_REG_21_PREAMBLE_LSB)
         return ((msb << 8) | lsb) & 0xFFFF
 
     @preamble_length.setter
     def preamble_length(self, val: int) -> None:
         assert 0 <= val <= 65535
-        self.write_u8(_RH_RF95_REG_20_PREAMBLE_MSB, (val >> 8) & 0xFF)
-        self.write_u8(_RH_RF95_REG_21_PREAMBLE_LSB, val & 0xFF)
+        self.write_u8(_RF95_REG_20_PREAMBLE_MSB, (val >> 8) & 0xFF)
+        self.write_u8(_RF95_REG_21_PREAMBLE_LSB, val & 0xFF)
 
     @property
     def frequency_mhz(self) -> Literal[433.0, 915.0]:
         """The frequency of the radio in Megahertz. Only the allowed values for
         your radio must be specified (i.e. 433 vs. 915 mhz)!
         """
-        msb = self.read_u8(_RH_RF95_REG_06_FRF_MSB)
-        mid = self.read_u8(_RH_RF95_REG_07_FRF_MID)
-        lsb = self.read_u8(_RH_RF95_REG_08_FRF_LSB)
+        msb = self.read_u8(_RF95_REG_06_FRF_MSB)
+        mid = self.read_u8(_RF95_REG_07_FRF_MID)
+        lsb = self.read_u8(_RF95_REG_08_FRF_LSB)
         frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
-        frequency = (frf * _RH_RF95_FSTEP) / 1000000.0
+        frequency = (frf * _RF95_FSTEP) / 1000000.0
         return frequency
 
     @frequency_mhz.setter
@@ -313,14 +311,14 @@ class RFM9x(RFMSPI):
         if val < 240 or val > 960:
             raise RuntimeError("frequency_mhz must be between 240 and 960")
         # Calculate FRF register 24-bit value.
-        frf = int((val * 1000000.0) / _RH_RF95_FSTEP) & 0xFFFFFF
+        frf = int((val * 1000000.0) / _RF95_FSTEP) & 0xFFFFFF
         # Extract byte values and update registers.
         msb = frf >> 16
         mid = (frf >> 8) & 0xFF
         lsb = frf & 0xFF
-        self.write_u8(_RH_RF95_REG_06_FRF_MSB, msb)
-        self.write_u8(_RH_RF95_REG_07_FRF_MID, mid)
-        self.write_u8(_RH_RF95_REG_08_FRF_LSB, lsb)
+        self.write_u8(_RF95_REG_06_FRF_MSB, msb)
+        self.write_u8(_RF95_REG_07_FRF_MID, mid)
+        self.write_u8(_RF95_REG_08_FRF_LSB, lsb)
 
     @property
     def tx_power(self) -> int:
@@ -346,10 +344,10 @@ class RFM9x(RFMSPI):
             # Enable power amp DAC if power is above 20 dB.
             # Lower setting by 3db when PA_BOOST enabled - see Data Sheet  Section 6.4
             if val > 20:
-                self.pa_dac = _RH_RF95_PA_DAC_ENABLE
+                self.pa_dac = _RF95_PA_DAC_ENABLE
                 val -= 3
             else:
-                self.pa_dac = _RH_RF95_PA_DAC_DISABLE
+                self.pa_dac = _RF95_PA_DAC_DISABLE
             self.pa_select = True
             self.output_power = (val - 5) & 0x0F
         else:
@@ -363,7 +361,7 @@ class RFM9x(RFMSPI):
         """The received strength indicator (in dBm) of the last received message."""
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
-        raw_rssi = self.read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE)
+        raw_rssi = self.read_u8(_RF95_REG_1A_PKT_RSSI_VALUE)
         if self.low_frequency_mode:
             raw_rssi -= 157
         else:
@@ -375,7 +373,7 @@ class RFM9x(RFMSPI):
         """The SNR (in dB) of the last received message."""
         # Read SNR 0x19 register and convert to value using formula in datasheet.
         # SNR(dB) = PacketSnr [twos complement] / 4
-        snr_byte = self.read_u8(_RH_RF95_REG_19_PKT_SNR_VALUE)
+        snr_byte = self.read_u8(_RF95_REG_19_PKT_SNR_VALUE)
         if snr_byte > 127:
             snr_byte = (256 - snr_byte) * -1
         return snr_byte / 4
@@ -386,7 +384,7 @@ class RFM9x(RFMSPI):
         value to increase throughput or to a lower value to increase the
         likelihood of successfully received payloads).  Valid values are
         listed in RFM9x.bw_bins."""
-        bw_id = (self.read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
+        bw_id = (self.read_u8(_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
         if bw_id >= len(self.bw_bins):
             current_bandwidth = 500000
         else:
@@ -402,8 +400,8 @@ class RFM9x(RFMSPI):
         else:
             bw_id = 9
         self.write_u8(
-            _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self.read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0F) | (bw_id << 4),
+            _RF95_REG_1D_MODEM_CONFIG1,
+            (self.read_u8(_RF95_REG_1D_MODEM_CONFIG1) & 0x0F) | (bw_id << 4),
         )
         if val >= 500000:
             # see Semtech SX1276 errata note 2.3
@@ -434,7 +432,7 @@ class RFM9x(RFMSPI):
         correction (try setting to a higher value to increase tolerance of
         short bursts of interference or to a lower value to increase bit
         rate).  Valid values are limited to 5, 6, 7, or 8."""
-        cr_id = (self.read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
+        cr_id = (self.read_u8(_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
         denominator = cr_id + 4
         return denominator
 
@@ -444,8 +442,8 @@ class RFM9x(RFMSPI):
         denominator = min(max(val, 5), 8)
         cr_id = denominator - 4
         self.write_u8(
-            _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self.read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF1) | (cr_id << 1),
+            _RF95_REG_1D_MODEM_CONFIG1,
+            (self.read_u8(_RF95_REG_1D_MODEM_CONFIG1) & 0xF1) | (cr_id << 1),
         )
 
     @property
@@ -454,7 +452,7 @@ class RFM9x(RFMSPI):
         value to increase the receiver's ability to distinguish signal from
         noise or to a lower value to increase the data transmission rate).
         Valid values are limited to 6, 7, 8, 9, 10, 11, or 12."""
-        sf_id = (self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xF0) >> 4
+        sf_id = (self.read_u8(_RF95_REG_1E_MODEM_CONFIG2) & 0xF0) >> 4
         return sf_id
 
     @spreading_factor.setter
@@ -467,13 +465,10 @@ class RFM9x(RFMSPI):
         else:
             self.detection_optimize = 0x3
 
-        self.write_u8(_RH_RF95_DETECTION_THRESHOLD, 0x0C if val == 6 else 0x0A)
+        self.write_u8(_RF95_DETECTION_THRESHOLD, 0x0C if val == 6 else 0x0A)
         self.write_u8(
-            _RH_RF95_REG_1E_MODEM_CONFIG2,
-            (
-                (self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0F)
-                | ((val << 4) & 0xF0)
-            ),
+            _RF95_REG_1E_MODEM_CONFIG2,
+            ((self.read_u8(_RF95_REG_1E_MODEM_CONFIG2) & 0x0F) | ((val << 4) & 0xF0)),
         )
 
     @property
@@ -481,62 +476,62 @@ class RFM9x(RFMSPI):
         """Set to True to enable hardware CRC checking of incoming packets.
         Incoming packets that fail the CRC check are not processed.  Set to
         False to disable CRC checking and process all incoming packets."""
-        return (self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x04) == 0x04
+        return (self.read_u8(_RF95_REG_1E_MODEM_CONFIG2) & 0x04) == 0x04
 
     @enable_crc.setter
     def enable_crc(self, val: bool) -> None:
         # Optionally enable CRC checking on incoming packets.
         if val:
             self.write_u8(
-                _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04,
+                _RF95_REG_1E_MODEM_CONFIG2,
+                self.read_u8(_RF95_REG_1E_MODEM_CONFIG2) | 0x04,
             )
         else:
             self.write_u8(
-                _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self.read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
+                _RF95_REG_1E_MODEM_CONFIG2,
+                self.read_u8(_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
     def crc_error(self) -> bool:
         """crc status"""
-        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
+        return (self.read_u8(_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
     def packet_sent(self) -> bool:
         """Transmit status"""
-        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
+        return (self.read_u8(_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
 
     def payload_ready(self) -> bool:
         """Receive status"""
-        return (self.read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+        return (self.read_u8(_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
 
     def clear_interrupt(self) -> None:
         """Clear Interrupt flags"""
-        self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        self.write_u8(_RF95_REG_12_IRQ_FLAGS, 0xFF)
 
     def fill_fifo(self, payload: bytearray) -> None:
         """len_data is not used but is here for compatibility with rfm69
         Fill the FIFO with a packet to send"""
-        self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
+        self.write_u8(_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Write payload.
-        self.write_from(_RH_RF95_REG_00_FIFO, payload)
+        self.write_from(_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
-        self.write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
+        self.write_u8(_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
 
     def read_fifo(self) -> bytearray:
         """Read the data from the FIFO."""
         # Read the length of the FIFO.
-        fifo_length = self.read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+        fifo_length = self.read_u8(_RF95_REG_13_RX_NB_BYTES)
         # Handle if the received packet is too small to include the 4 byte
         # RadioHead header and at least one byte of data --reject this packet and ignore it.
         if fifo_length > 0:  # read and clear the FIFO if anything in it
             packet = bytearray(fifo_length)
-            current_addr = self.read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-            self.write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+            current_addr = self.read_u8(_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+            self.write_u8(_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
             # read the packet
-            self.read_into(_RH_RF95_REG_00_FIFO, packet)
+            self.read_into(_RF95_REG_00_FIFO, packet)
 
             # clear interrupt
-            self.write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+            self.write_u8(_RF95_REG_12_IRQ_FLAGS, 0xFF)
         if fifo_length < 5:
             packet = None
         return packet
