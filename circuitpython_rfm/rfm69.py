@@ -49,40 +49,43 @@ __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
 
 # Internal constants:
-_REG_FIFO = const(0x00)
-_REG_OP_MODE = const(0x01)
-_REG_DATA_MOD = const(0x02)
-_REG_BITRATE_MSB = const(0x03)
-_REG_BITRATE_LSB = const(0x04)
-_REG_FDEV_MSB = const(0x05)
-_REG_FDEV_LSB = const(0x06)
-_REG_FRF_MSB = const(0x07)
-_REG_FRF_MID = const(0x08)
-_REG_FRF_LSB = const(0x09)
-_REG_VERSION = const(0x10)
-_REG_PA_LEVEL = const(0x11)
-_REG_OCP = const(0x13)
-_REG_RX_BW = const(0x19)
-_REG_AFC_BW = const(0x1A)
-_REG_RSSI_VALUE = const(0x24)
-_REG_DIO_MAPPING1 = const(0x25)
-_REG_IRQ_FLAGS1 = const(0x27)
-_REG_IRQ_FLAGS2 = const(0x28)
-_REG_PREAMBLE_MSB = const(0x2C)
-_REG_PREAMBLE_LSB = const(0x2D)
-_REG_SYNC_CONFIG = const(0x2E)
-_REG_SYNC_VALUE1 = const(0x2F)
-_REG_NODE_ADDR = const(0x39)
-_REG_BROADCAST_ADDR = const(0x3A)
-_REG_PACKET_CONFIG1 = const(0x37)
-_REG_FIFO_THRESH = const(0x3C)
-_REG_PACKET_CONFIG2 = const(0x3D)
-_REG_AES_KEY1 = const(0x3E)
-_REG_TEMP1 = const(0x4E)
-_REG_TEMP2 = const(0x4F)
-_REG_TEST_PA1 = const(0x5A)
-_REG_TEST_PA2 = const(0x5C)
-_REG_TEST_DAGC = const(0x6F)
+_RF69_REG_00_FIFO = const(0x00)
+_RF69_REG_01_OP_MODE = const(0x01)
+_RF69_REG_02_DATA_MOD = const(0x02)
+_RF69_REG_03_BITRATE_MSB = const(0x03)
+_RF69_REG_04_BITRATE_LSB = const(0x04)
+_RF69_REG_05_FDEV_MSB = const(0x05)
+_RF69_REG_06_FDEV_LSB = const(0x06)
+_RF69_REG_07_FRF_MSB = const(0x07)
+_RF69_REG_08_FRF_MID = const(0x08)
+_RF69_REG_09_FRF_LSB = const(0x09)
+_RF69_REG_10_VERSION = const(0x10)
+_RF69_REG_11_PA_LEVEL = const(0x11)
+_RF69_REG_13_OCP = const(0x13)
+_RF69_REG_19_RX_BW = const(0x19)
+_RF69_REG_1A_AFC_BW = const(0x1A)
+_RF69_REG_1B_OOK_PEAK = const(0x1B)
+_RF69_REG_1C_OOK_AVG = const(0x1C)
+_RF69_REG_1D_OOK_FIX = const(0x1D)
+_RF69_REG_24_RSSI_VALUE = const(0x24)
+_RF69_REG_25_DIO_MAPPING1 = const(0x25)
+_RF69_REG_27_IRQ_FLAGS1 = const(0x27)
+_RF69_REG_28_IRQ_FLAGS2 = const(0x28)
+_RF69_REG_2C_PREAMBLE_MSB = const(0x2C)
+_RF69_REG_2D_PREAMBLE_LSB = const(0x2D)
+_RF69_REG_2E_SYNC_CONFIG = const(0x2E)
+_RF69_REG_2F_SYNC_VALUE1 = const(0x2F)
+_RF69_REG_39_NODE_ADDR = const(0x39)
+_RF69_REG_3A_BROADCAST_ADDR = const(0x3A)
+_RF69_REG_37_PACKET_CONFIG1 = const(0x37)
+_RF69_REG_3C_FIFO_THRESH = const(0x3C)
+_RF69_REG_3D_PACKET_CONFIG2 = const(0x3D)
+_RF69_REG_3E_AES_KEY1 = const(0x3E)
+_RF69_REG_4E_TEMP1 = const(0x4E)
+_RF69_REG_4F_TEMP2 = const(0x4F)
+_RF69_REG_5A_TEST_PA1 = const(0x5A)
+_RF69_REG_5C_TEST_PA2 = const(0x5C)
+_RF69_REG_6F_TEST_DAGC = const(0x6F)
 
 _TEST_PA1_NORMAL = const(0x55)
 _TEST_PA1_BOOST = const(0x5D)
@@ -157,31 +160,39 @@ class RFM69(RFMSPI):
     """
 
     # Control bits from the registers of the chip:
-    data_mode = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=5, bits=2)
-    modulation_type = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=3, bits=2)
-    modulation_shaping = RFMSPI.RegisterBits(_REG_DATA_MOD, offset=0, bits=2)
-    temp_start = RFMSPI.RegisterBits(_REG_TEMP1, offset=3)
-    temp_running = RFMSPI.RegisterBits(_REG_TEMP1, offset=2)
-    sync_on = RFMSPI.RegisterBits(_REG_SYNC_CONFIG, offset=7)
-    sync_size = RFMSPI.RegisterBits(_REG_SYNC_CONFIG, offset=3, bits=3)
-    aes_on = RFMSPI.RegisterBits(_REG_PACKET_CONFIG2, offset=0)
-    pa_0_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=7)
-    pa_1_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=6)
-    pa_2_on = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=5)
-    output_power = RFMSPI.RegisterBits(_REG_PA_LEVEL, offset=0, bits=5)
-    rx_bw_dcc_freq = RFMSPI.RegisterBits(_REG_RX_BW, offset=5, bits=3)
-    rx_bw_mantissa = RFMSPI.RegisterBits(_REG_RX_BW, offset=3, bits=2)
-    rx_bw_exponent = RFMSPI.RegisterBits(_REG_RX_BW, offset=0, bits=3)
-    afc_bw_dcc_freq = RFMSPI.RegisterBits(_REG_AFC_BW, offset=5, bits=3)
-    afc_bw_mantissa = RFMSPI.RegisterBits(_REG_AFC_BW, offset=3, bits=2)
-    afc_bw_exponent = RFMSPI.RegisterBits(_REG_AFC_BW, offset=0, bits=3)
-    packet_format = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=7, bits=1)
-    dc_free = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=5, bits=2)
-    crc_on = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=4, bits=1)
-    crc_auto_clear_off = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=3, bits=1)
-    address_filter = RFMSPI.RegisterBits(_REG_PACKET_CONFIG1, offset=1, bits=2)
-    mode_ready = RFMSPI.RegisterBits(_REG_IRQ_FLAGS1, offset=7)
-    dio_0_mapping = RFMSPI.RegisterBits(_REG_DIO_MAPPING1, offset=6, bits=2)
+    data_mode = RFMSPI.RegisterBits(_RF69_REG_02_DATA_MOD, offset=5, bits=2)
+    modulation_type = RFMSPI.RegisterBits(_RF69_REG_02_DATA_MOD, offset=3, bits=2)
+    modulation_shaping = RFMSPI.RegisterBits(_RF69_REG_02_DATA_MOD, offset=0, bits=2)
+    temp_start = RFMSPI.RegisterBits(_RF69_REG_4E_TEMP1, offset=3)
+    temp_running = RFMSPI.RegisterBits(_RF69_REG_4E_TEMP1, offset=2)
+    sync_on = RFMSPI.RegisterBits(_RF69_REG_2E_SYNC_CONFIG, offset=7)
+    sync_size = RFMSPI.RegisterBits(_RF69_REG_2E_SYNC_CONFIG, offset=3, bits=3)
+    aes_on = RFMSPI.RegisterBits(_RF69_REG_3D_PACKET_CONFIG2, offset=0)
+    pa_0_on = RFMSPI.RegisterBits(_RF69_REG_11_PA_LEVEL, offset=7)
+    pa_1_on = RFMSPI.RegisterBits(_RF69_REG_11_PA_LEVEL, offset=6)
+    pa_2_on = RFMSPI.RegisterBits(_RF69_REG_11_PA_LEVEL, offset=5)
+    output_power = RFMSPI.RegisterBits(_RF69_REG_11_PA_LEVEL, offset=0, bits=5)
+    rx_bw_dcc_freq = RFMSPI.RegisterBits(_RF69_REG_19_RX_BW, offset=5, bits=3)
+    rx_bw_mantissa = RFMSPI.RegisterBits(_RF69_REG_19_RX_BW, offset=3, bits=2)
+    rx_bw_exponent = RFMSPI.RegisterBits(_RF69_REG_19_RX_BW, offset=0, bits=3)
+    afc_bw_dcc_freq = RFMSPI.RegisterBits(_RF69_REG_1A_AFC_BW, offset=5, bits=3)
+    afc_bw_mantissa = RFMSPI.RegisterBits(_RF69_REG_1A_AFC_BW, offset=3, bits=2)
+    afc_bw_exponent = RFMSPI.RegisterBits(_RF69_REG_1A_AFC_BW, offset=0, bits=3)
+    packet_format = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=7, bits=1)
+    dc_free = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=5, bits=2)
+    crc_on = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=4, bits=1)
+    crc_auto_clear_off = RFMSPI.RegisterBits(
+        _RF69_REG_37_PACKET_CONFIG1, offset=3, bits=1
+    )
+    address_filter = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=1, bits=2)
+    mode_ready = RFMSPI.RegisterBits(_RF69_REG_27_IRQ_FLAGS1, offset=7)
+    dio_0_mapping = RFMSPI.RegisterBits(_RF69_REG_25_DIO_MAPPING1, offset=6, bits=2)
+    ook_thresh_type = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=6, bits=2)
+    ook_thresh_step = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=5, bits=3)
+    ook_peak_thresh_dec = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=0, bits=3)
+    ook_average_thresh_filt = RFMSPI.RegisterBits(
+        _RF69_REG_1C_OOK_AVG, offset=6, bits=2
+    )
 
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-arguments
@@ -211,15 +222,15 @@ class RFM69(RFMSPI):
         self._rst.switch_to_output(value=False)
         self.reset()  # Reset the chip.
         # Check the version of the chip.
-        version = self.read_u8(_REG_VERSION)
+        version = self.read_u8(_RF69_REG_10_VERSION)
         if version != 0x24:
             raise RuntimeError("Invalid RFM69 version, check wiring!")
         self.idle()  # Enter idle state.
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.
-        self.write_u8(_REG_FIFO_THRESH, 0b10001111)
+        self.write_u8(_RF69_REG_3C_FIFO_THRESH, 0b10001111)
         # Configure low beta off.
-        self.write_u8(_REG_TEST_DAGC, 0x30)
+        self.write_u8(_RF69_REG_6F_TEST_DAGC, 0x30)
         # Set the syncronization word.
         self.sync_word = sync_word
         self.preamble_length = preamble_length  # Set the preamble length.
@@ -258,9 +269,9 @@ class RFM69(RFMSPI):
     def disable_boost(self) -> None:
         """Disable preamp boost."""
         if self.high_power:
-            self.write_u8(_REG_TEST_PA1, _TEST_PA1_NORMAL)
-            self.write_u8(_REG_TEST_PA2, _TEST_PA2_NORMAL)
-            self.write_u8(_REG_OCP, _OCP_NORMAL)
+            self.write_u8(_RF69_REG_5A_TEST_PA1, _TEST_PA1_NORMAL)
+            self.write_u8(_RF69_REG_5C_TEST_PA2, _TEST_PA2_NORMAL)
+            self.write_u8(_RF69_REG_13_OCP, _OCP_NORMAL)
 
     def idle(self) -> None:
         """Enter idle standby mode (switching off high power amplifiers if necessary)."""
@@ -290,9 +301,9 @@ class RFM69(RFMSPI):
         """
         # Like RadioHead library, turn on high power boost if needed.
         if self.high_power and (self._tx_power >= 18):
-            self.write_u8(_REG_TEST_PA1, _TEST_PA1_BOOST)
-            self.write_u8(_REG_TEST_PA2, _TEST_PA2_BOOST)
-            self.write_u8(_REG_OCP, _OCP_HIGH_POWER)
+            self.write_u8(_RF69_REG_5A_TEST_PA1, _TEST_PA1_BOOST)
+            self.write_u8(_RF69_REG_5C_TEST_PA2, _TEST_PA2_BOOST)
+            self.write_u8(_RF69_REG_13_OCP, _OCP_HIGH_POWER)
         # Enable packet sent interrupt for D0 line.
         self.dio_0_mapping = 0b00
         # Enter TX mode (will clear FIFO!).
@@ -311,7 +322,7 @@ class RFM69(RFMSPI):
             pass
         # Grab the temperature value and convert it to Celsius.
         # This uses the same observed value formula from the Radiohead library.
-        temp = self.read_u8(_REG_TEMP2)
+        temp = self.read_u8(_RF69_REG_4F_TEMP2)
         return 166.0 - temp
 
     @property
@@ -321,17 +332,17 @@ class RFM69(RFMSPI):
         changing logical modes--use :py:func:`idle`, :py:func:`sleep`, :py:func:`transmit`,
         :py:func:`listen` instead to signal intent for explicit logical modes.
         """
-        op_mode = self.read_u8(_REG_OP_MODE)
+        op_mode = self.read_u8(_RF69_REG_01_OP_MODE)
         return (op_mode >> 2) & 0b111
 
     @operation_mode.setter
     def operation_mode(self, val: int) -> None:
         assert 0 <= val <= 4
         # Set the mode bits inside the operation mode register.
-        op_mode = self.read_u8(_REG_OP_MODE)
+        op_mode = self.read_u8(_RF69_REG_01_OP_MODE)
         op_mode &= 0b11100011
         op_mode |= val << 2
-        self.write_u8(_REG_OP_MODE, op_mode)
+        self.write_u8(_RF69_REG_01_OP_MODE, op_mode)
         # Wait for mode to change by polling interrupt bit.
         if HAS_SUPERVISOR:
             start = supervisor.ticks_ms()
@@ -359,7 +370,7 @@ class RFM69(RFMSPI):
         sync_word_length = self.sync_size + 1  # Sync word size is offset by 1
         # according to datasheet.
         sync_word = bytearray(sync_word_length)
-        self.read_into(_REG_SYNC_VALUE1, sync_word)
+        self.read_into(_RF69_REG_2F_SYNC_VALUE1, sync_word)
         return sync_word
 
     @sync_word.setter
@@ -371,7 +382,7 @@ class RFM69(RFMSPI):
             # Check sync word is at most 8 bytes.
             assert 1 <= len(val) <= 8
             # Update the value, size and turn on the sync word.
-            self.write_from(_REG_SYNC_VALUE1, val)
+            self.write_from(_RF69_REG_2F_SYNC_VALUE1, val)
             self.sync_size = len(val) - 1  # Again sync word size is offset by
             # 1 according to datasheet.
             self.sync_on = 1
@@ -382,15 +393,15 @@ class RFM69(RFMSPI):
         Received packets must match this length or they are ignored! Set to 4 to match the
         RadioHead RFM69 library.
         """
-        msb = self.read_u8(_REG_PREAMBLE_MSB)
-        lsb = self.read_u8(_REG_PREAMBLE_LSB)
+        msb = self.read_u8(_RF69_REG_2C_PREAMBLE_MSB)
+        lsb = self.read_u8(_RF69_REG_2D_PREAMBLE_LSB)
         return ((msb << 8) | lsb) & 0xFFFF
 
     @preamble_length.setter
     def preamble_length(self, val: int) -> None:
         assert 0 <= val <= 65535
-        self.write_u8(_REG_PREAMBLE_MSB, (val >> 8) & 0xFF)
-        self.write_u8(_REG_PREAMBLE_LSB, val & 0xFF)
+        self.write_u8(_RF69_REG_2C_PREAMBLE_MSB, (val >> 8) & 0xFF)
+        self.write_u8(_RF69_REG_2D_PREAMBLE_LSB, val & 0xFF)
 
     @property
     def frequency_mhz(self) -> float:
@@ -400,9 +411,9 @@ class RFM69(RFMSPI):
         # FRF register is computed from the frequency following the datasheet.
         # See section 6.2 and FRF register description.
         # Read bytes of FRF register and assemble into a 24-bit unsigned value.
-        msb = self.read_u8(_REG_FRF_MSB)
-        mid = self.read_u8(_REG_FRF_MID)
-        lsb = self.read_u8(_REG_FRF_LSB)
+        msb = self.read_u8(_RF69_REG_07_FRF_MSB)
+        mid = self.read_u8(_RF69_REG_08_FRF_MID)
+        lsb = self.read_u8(_RF69_REG_09_FRF_LSB)
         frf = ((msb << 16) | (mid << 8) | lsb) & 0xFFFFFF
         frequency = (frf * _FSTEP) / 1000000.0
         return frequency
@@ -416,9 +427,9 @@ class RFM69(RFMSPI):
         msb = frf >> 16
         mid = (frf >> 8) & 0xFF
         lsb = frf & 0xFF
-        self.write_u8(_REG_FRF_MSB, msb)
-        self.write_u8(_REG_FRF_MID, mid)
-        self.write_u8(_REG_FRF_LSB, lsb)
+        self.write_u8(_RF69_REG_07_FRF_MSB, msb)
+        self.write_u8(_RF69_REG_08_FRF_MID, mid)
+        self.write_u8(_RF69_REG_09_FRF_LSB, lsb)
 
     @property
     def encryption_key(self) -> bytearray:
@@ -432,7 +443,7 @@ class RFM69(RFMSPI):
             return None
         # Encryption is enabled so read the key and return it.
         key = bytearray(16)
-        self.read_into(_REG_AES_KEY1, key)
+        self.read_into(_RF69_REG_3E_AES_KEY1, key)
         return key
 
     @encryption_key.setter
@@ -443,7 +454,7 @@ class RFM69(RFMSPI):
         else:
             # Set the encryption key and enable encryption.
             assert len(val) == 16
-            self.write_from(_REG_AES_KEY1, val)
+            self.write_from(_RF69_REG_3E_AES_KEY1, val)
             self.aes_on = 1
 
     @property
@@ -512,7 +523,7 @@ class RFM69(RFMSPI):
         receipt of the last packet.
         """
         # Read RSSI register and convert to value using formula in datasheet.
-        return -self.read_u8(_REG_RSSI_VALUE) / 2.0
+        return -self.read_u8(_RF69_REG_24_RSSI_VALUE) / 2.0
 
     @property
     def bitrate(self) -> float:
@@ -520,8 +531,8 @@ class RFM69(RFMSPI):
         Can be a value from ~489 to 32mbit/s, but see the datasheet for the exact supported
         values.
         """
-        msb = self.read_u8(_REG_BITRATE_MSB)
-        lsb = self.read_u8(_REG_BITRATE_LSB)
+        msb = self.read_u8(_RF69_REG_03_BITRATE_MSB)
+        lsb = self.read_u8(_RF69_REG_04_BITRATE_LSB)
         return _FXOSC / ((msb << 8) | lsb)
 
     @bitrate.setter
@@ -529,14 +540,14 @@ class RFM69(RFMSPI):
         assert (_FXOSC / 65535) <= val <= 32000000.0
         # Round up to the next closest bit-rate value with addition of 0.5.
         bitrate = int((_FXOSC / val) + 0.5) & 0xFFFF
-        self.write_u8(_REG_BITRATE_MSB, bitrate >> 8)
-        self.write_u8(_REG_BITRATE_LSB, bitrate & 0xFF)
+        self.write_u8(_RF69_REG_03_BITRATE_MSB, bitrate >> 8)
+        self.write_u8(_RF69_REG_04_BITRATE_LSB, bitrate & 0xFF)
 
     @property
     def frequency_deviation(self) -> float:
         """The frequency deviation in Hertz."""
-        msb = self.read_u8(_REG_FDEV_MSB)
-        lsb = self.read_u8(_REG_FDEV_LSB)
+        msb = self.read_u8(_RF69_REG_05_FDEV_MSB)
+        lsb = self.read_u8(_RF69_REG_06_FDEV_LSB)
         return _FSTEP * ((msb << 8) | lsb)
 
     @frequency_deviation.setter
@@ -544,8 +555,8 @@ class RFM69(RFMSPI):
         assert 0 <= val <= (_FSTEP * 16383)  # fdev is a 14-bit unsigned value
         # Round up to the next closest integer value with addition of 0.5.
         fdev = int((val / _FSTEP) + 0.5) & 0x3FFF
-        self.write_u8(_REG_FDEV_MSB, fdev >> 8)
-        self.write_u8(_REG_FDEV_LSB, fdev & 0xFF)
+        self.write_u8(_RF69_REG_05_FDEV_MSB, fdev >> 8)
+        self.write_u8(_RF69_REG_06_FDEV_LSB, fdev & 0xFF)
 
     @property
     def enable_crc(self) -> bool:
@@ -564,7 +575,7 @@ class RFM69(RFMSPI):
 
     def crc_error(self) -> bool:
         """crc status"""
-        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x2) >> 1
+        return (self.read_u8(_RF69_REG_28_IRQ_FLAGS2) & 0x2) >> 1
 
     @property
     def enable_address_filter(self) -> bool:
@@ -584,35 +595,45 @@ class RFM69(RFMSPI):
     @property
     def fsk_node_address(self) -> int:
         """Node Address for Address Filtering"""
-        return self.read_u8(_REG_NODE_ADDR)
+        return self.read_u8(_RF69_REG_39_NODE_ADDR)
 
     @fsk_node_address.setter
     def fsk_node_address(self, val: int) -> None:
         assert 0 <= val <= 255
-        self.write_u8(_REG_NODE_ADDR, val)
+        self.write_u8(_RF69_REG_39_NODE_ADDR, val)
 
     @property
     def fsk_broadcast_address(self) -> int:
         """Node Address for Address Filtering"""
-        return self.read_u8(_REG_BROADCAST_ADDR)
+        return self.read_u8(_RF69_REG_3A_BROADCAST_ADDR)
 
     @fsk_broadcast_address.setter
     def fsk_broadcast_address(self, val: int) -> None:
         assert 0 <= val <= 255
-        self.write_u8(_REG_BROADCAST_ADDR, val)
+        self.write_u8(_RF69_REG_3A_BROADCAST_ADDR, val)
+
+    @property
+    def ook_fixed_threshold(self) -> int:
+        """Fixed threshold for data slicer in OOK mode"""
+        return self.read_u8(_RF69_REG_1D_OOK_FIX)
+
+    @ook_fixed_threshold.setter
+    def ook_fixed_threshold(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_RF69_REG_1D_OOK_FIX, val)
 
     def packet_sent(self) -> bool:
         """Transmit status"""
-        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x8) >> 3
+        return (self.read_u8(_RF69_REG_28_IRQ_FLAGS2) & 0x8) >> 3
 
     def payload_ready(self) -> bool:
         """Receive status"""
-        return (self.read_u8(_REG_IRQ_FLAGS2) & 0x4) >> 2
+        return (self.read_u8(_RF69_REG_28_IRQ_FLAGS2) & 0x4) >> 2
 
     def clear_interrupt(self) -> None:
         """Clear interrupt flags"""
-        self.write_u8(_REG_IRQ_FLAGS1, 0xFF)
-        self.write_u8(_REG_IRQ_FLAGS2, 0xFF)
+        self.write_u8(_RF69_REG_27_IRQ_FLAGS1, 0xFF)
+        self.write_u8(_RF69_REG_28_IRQ_FLAGS2, 0xFF)
 
     def fill_fifo(self, payload: bytearray) -> None:
         """Write the payload to the FIFO."""
@@ -621,18 +642,18 @@ class RFM69(RFMSPI):
         # put the payload lengthe in the beginning of the packet for RFM69
         complete_payload = complete_payload + payload
         # Write payload to transmit fifo
-        self.write_from(_REG_FIFO, complete_payload)
+        self.write_from(_RF69_REG_00_FIFO, complete_payload)
 
     def read_fifo(self) -> bytearray:
         """Read the packet from the FIFO."""
         # Read the length of the FIFO.
-        fifo_length = self.read_u8(_REG_FIFO)
+        fifo_length = self.read_u8(_RF69_REG_00_FIFO)
         # Handle if the received packet is too small to include the 4 byte
         # RadioHead header and at least one byte of data --reject this packet and ignore it.
         if fifo_length > 0:  # read and clear the FIFO if anything in it
             packet = bytearray(fifo_length)
             # read the packet
-            self.read_into(_REG_FIFO, packet, fifo_length)
+            self.read_into(_RF69_REG_00_FIFO, packet, fifo_length)
         if fifo_length < 5:
             packet = None
         return packet

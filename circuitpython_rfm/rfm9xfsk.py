@@ -54,6 +54,9 @@ _RF95_REG_10_RSSI_THRESH = const(0x10)
 _RF95_REG_11_RSSI_VALUE = const(0x11)
 _RF95_REG_12_RX_BW = const(0x12)
 _RF95_REG_13_AFC_BW = const(0x13)
+_RF95_REG_14_OOK_PEAK = const(0x14)
+_RF95_REG_15_OOK_FIX = const(0x15)
+_RF95_REG_16_OOK_AVG = const(0x16)
 _RF95_REG_1A_AFC_FEI_CTL = const(0x1A)
 _RF95_REG_1B_AFC_MSB = const(0x1B)
 _RF95_REG_1C_AFC_LSB = const(0x1C)
@@ -198,6 +201,14 @@ class RFM9xFSK(RFMSPI):
     address_filter = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=1, bits=2)
     crc_type = RFMSPI.RegisterBits(_RF95_REG_30_PACKET_CONFIG_1, offset=0, bits=1)
     mode_ready = RFMSPI.RegisterBits(_RF95_REG_3E_IRQ_FLAGS_1, offset=7)
+    ook_bit_sync_on = RFMSPI.RegisterBits(_RF95_REG_14_OOK_PEAK, offset=5, bits=1)
+    ook_thresh_type = RFMSPI.RegisterBits(_RF95_REG_14_OOK_PEAK, offset=4, bits=2)
+    ook_thresh_step = RFMSPI.RegisterBits(_RF95_REG_14_OOK_PEAK, offset=0, bits=3)
+    ook_peak_thresh_dec = RFMSPI.RegisterBits(_RF95_REG_16_OOK_AVG, offset=5, bits=3)
+    ook_average_offset = RFMSPI.RegisterBits(_RF95_REG_16_OOK_AVG, offset=2, bits=2)
+    ook_average_thresh_filt = RFMSPI.RegisterBits(
+        _RF95_REG_16_OOK_AVG, offset=0, bits=2
+    )
 
     def __init__(
         self,
@@ -518,6 +529,16 @@ class RFM9xFSK(RFMSPI):
     def fsk_broadcast_address(self, val: int) -> None:
         assert 0 <= val <= 255
         self.write_u8(_RF95_REG_34_BROADCAST_ADDR, val)
+
+    @property
+    def ook_fixed_threshold(self) -> int:
+        """Fixed threshold for data slicer in OOK mode"""
+        return self.read_u8(_RF95_REG_15_OOK_FIX)
+
+    @ook_fixed_threshold.setter
+    def ook_fixed_threshold(self, val: int) -> None:
+        assert 0 <= val <= 255
+        self.write_u8(_RF95_REG_15_OOK_FIX, val)
 
     def packet_sent(self) -> bool:
         """Transmit status"""
