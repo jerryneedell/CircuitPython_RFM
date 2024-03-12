@@ -314,7 +314,7 @@ class RFM9xFSK(RFMSPI):
         transmitting a packet of data use :py:func:`send` instead.
         """
         self.operation_mode = TX_MODE
-        self.dio0_mapping = 0b01  # Interrupt on tx done.
+        self.dio0_mapping = 0b00  # Interrupt on tx done.
 
     @property
     def sync_word(self) -> bytearray:
