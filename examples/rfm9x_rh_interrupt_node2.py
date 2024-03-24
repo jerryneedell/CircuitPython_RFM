@@ -19,7 +19,7 @@ def rfm9x_callback(rfm9x_irq):  # pylint: disable=unused-argument
     # print("IRQ detected ", rfm9x_irq, rfm9x.packet_sent(), rfm9x.payload_ready())
     # check to see if this was a rx interrupt - ignore tx
     if rfm9x.payload_ready():
-        packet = rfm9x.receive(with_header=True, timeout=None, with_ack=True)
+        packet = rfm9x.receive_with_ack(with_header=True, timeout=None)
         if packet is not None:
             packet_received = True
             # Received a packet!

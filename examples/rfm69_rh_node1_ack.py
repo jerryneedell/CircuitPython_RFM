@@ -50,7 +50,7 @@ print("Waiting for packets...")
 time_now = time.monotonic()
 while True:
     # Look for a new packet: only accept if addresses to my_node
-    packet = rfm69.receive(with_ack=True, with_header=True)
+    packet = rfm69.receive_with_ack(with_header=True)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!

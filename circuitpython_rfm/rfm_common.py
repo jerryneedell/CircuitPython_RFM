@@ -6,6 +6,7 @@
 
 * Author(s): Jerry Needell
 """
+import asyncio
 import time
 import random
 from adafruit_bus_device import spi_device
@@ -61,7 +62,18 @@ def ticks_diff(ticks1: int, ticks2: int) -> int:
     return diff
 
 
-def check_timeout(flag: Callable, limit: float) -> bool:
+def asyncio_to_blocking(function):
+    """run async function as normal blocking function"""
+
+    def blocking_function(self, *args, **kwargs):
+        return asyncio.run(function(self, *args, **kwargs))
+
+    return blocking_function
+
+
+async def asyncio_check_timeout(
+    flag: Callable, limit: float, timeout_poll: float
+) -> bool:
     """test for timeout waiting for specified flag"""
     timed_out = False
     if HAS_SUPERVISOR:
@@ -69,11 +81,14 @@ def check_timeout(flag: Callable, limit: float) -> bool:
         while not timed_out and not flag():
             if ticks_diff(supervisor.ticks_ms(), start) >= limit * 1000:
                 timed_out = True
+            await asyncio.sleep(timeout_poll)
     else:
         start = time.monotonic()
         while not timed_out and not flag():
             if time.monotonic() - start >= limit:
                 timed_out = True
+            await asyncio.sleep(timeout_poll)
+
     return timed_out
 
 
@@ -198,6 +213,7 @@ class RFMSPI:
         """Enable RadioHead compatibility"""
 
         self.crc_error_count = 0
+        self.timeout_poll = 0.001
 
     # pylint: enable-msg=too-many-arguments
 
@@ -250,7 +266,7 @@ class RFMSPI:
             device.write(self._BUFFER, end=2)
 
     # pylint: disable=too-many-branches
-    def send(
+    async def asyncio_send(
         self,
         data: ReadableBuffer,
         *,
@@ -310,7 +326,9 @@ class RFMSPI:
         self.transmit()
         # Wait for packet_sent interrupt with explicit polling (not ideal but
         # best that can be done right now without interrupts).
-        timed_out = check_timeout(self.packet_sent, self.xmit_timeout)
+        timed_out = await asyncio_check_timeout(
+            self.packet_sent, self.xmit_timeout, self.timeout_poll
+        )
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
@@ -320,7 +338,9 @@ class RFMSPI:
         self.clear_interrupt()
         return not timed_out
 
-    def send_with_ack(self, data: ReadableBuffer) -> bool:
+    send = asyncio_to_blocking(asyncio_send)
+
+    async def asyncio_send_with_ack(self, data: ReadableBuffer) -> bool:
         """Reliable Datagram mode:
         Send a packet with data and wait for an ACK response.
         The packet header is automatically generated.
@@ -336,13 +356,15 @@ class RFMSPI:
         self.sequence_number = (self.sequence_number + 1) & 0xFF
         while not got_ack and retries_remaining:
             self.identifier = self.sequence_number
-            self.send(data, keep_listening=True)
+            await self.asyncio_send(data, keep_listening=True)
             # Don't look for ACK from Broadcast message
             if self.destination == _RH_BROADCAST_ADDRESS:
                 got_ack = True
             else:
                 # wait for a packet from our destination
-                ack_packet = self.receive(timeout=self.ack_wait, with_header=True)
+                ack_packet = await self.asyncio_receive(
+                    timeout=self.ack_wait, with_header=True
+                )
                 if ack_packet is not None:
                     if ack_packet[3] & _RH_FLAGS_ACK:
                         # check the ID
@@ -352,19 +374,20 @@ class RFMSPI:
             # pause before next retry -- random delay
             if not got_ack:
                 # delay by random amount before next try
-                time.sleep(self.ack_wait + self.ack_wait * random.random())
+                await asyncio.sleep(self.ack_wait + self.ack_wait * random.random())
             retries_remaining = retries_remaining - 1
             # set retry flag in packet header
             self.flags |= _RH_FLAGS_RETRY
         self.flags = 0  # clear flags
         return got_ack
 
-    def receive(
+    send_with_ack = asyncio_to_blocking(asyncio_send_with_ack)
+
+    async def asyncio_receive(
         self,
         *,
         keep_listening: bool = True,
         with_header: bool = False,
-        with_ack: bool = False,
         timeout: Optional[float] = None
     ) -> Optional[bytearray]:
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
@@ -379,12 +402,9 @@ class RFMSPI:
         the header before returning the packet to the caller.
         If with_header is True then the 4 byte header will be returned with the packet.
         The payload then begins at packet[4].
-        If with_ack is True, send an ACK after receipt (Reliable Datagram mode)
         """
-        if not self.radiohead and (with_header or with_ack):
-            raise RuntimeError(
-                "with_header and with_ack only supported for RadioHead mode"
-            )
+        if not self.radiohead and with_header:
+            raise RuntimeError("with_header only supported for RadioHead mode")
         timed_out = False
         if timeout is None:
             timeout = self.receive_timeout
@@ -395,7 +415,81 @@ class RFMSPI:
             # interrupt supports.
             # Make sure we are listening for packets.
             self.listen()
-            timed_out = check_timeout(self.payload_ready, timeout)
+            timed_out = await asyncio_check_timeout(
+                self.payload_ready, timeout, self.timeout_poll
+            )
+        # Payload ready is set, a packet is in the FIFO.
+        packet = None
+        # save last RSSI reading
+        self.last_rssi = self.rssi
+        self.last_snr = self.snr
+
+        # Enter idle mode to stop receiving other packets.
+        self.idle()
+        if not timed_out:
+            if self.enable_crc and self.crc_error():
+                self.crc_error_count += 1
+            else:
+                packet = self.read_fifo()
+                if self.radiohead:
+                    if packet is not None:
+                        if (
+                            self.node != _RH_BROADCAST_ADDRESS
+                            and packet[0] != _RH_BROADCAST_ADDRESS
+                            and packet[0] != self.node
+                        ):
+                            packet = None
+                        if (
+                            not with_header and packet is not None
+                        ):  # skip the header if not wanted
+                            packet = packet[4:]
+        # Listen again if necessary and return the result packet.
+        if keep_listening:
+            self.listen()
+        else:
+            # Enter idle mode to stop receiving other packets.
+            self.idle()
+        self.clear_interrupt()
+        return packet
+
+    receive = asyncio_to_blocking(asyncio_receive)
+
+    async def asyncio_receive_with_ack(
+        self,
+        *,
+        keep_listening: bool = True,
+        with_header: bool = False,
+        timeout: Optional[float] = None
+    ) -> Optional[bytearray]:
+        """Wait to receive a packet from the receiver. If a packet is found the payload bytes
+        are returned, otherwise None is returned (which indicates the timeout elapsed with no
+        reception).
+        If keep_listening is True (the default) the chip will immediately enter listening mode
+        after reception of a packet, otherwise it will fall back to idle mode and ignore any
+        future reception.
+        All packets must have a 4-byte header for compatibility with the
+        RadioHead library.
+        The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
+        the header before returning the packet to the caller.
+        If with_header is True then the 4 byte header will be returned with the packet.
+        The payload then begins at packet[4].
+        Send an ACK after receipt (Reliable Datagram mode)
+        """
+        if not self.radiohead:
+            raise RuntimeError("receive_with_ack only supported for RadioHead mode")
+        timed_out = False
+        if timeout is None:
+            timeout = self.receive_timeout
+        if timeout is not None:
+            # Wait for the payloadready signal.  This is not ideal and will
+            # surely miss or overflow the FIFO when packets aren't read fast
+            # enough, however it's the best that can be done from Python without
+            # interrupt supports.
+            # Make sure we are listening for packets.
+            self.listen()
+            timed_out = await asyncio_check_timeout(
+                self.payload_ready, timeout, self.timeout_poll
+            )
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
@@ -418,16 +512,14 @@ class RFMSPI:
                         ):
                             packet = None
                         # send ACK unless this was an ACK or a broadcast
-                        elif (
-                            with_ack
-                            and ((packet[3] & _RH_FLAGS_ACK) == 0)
-                            and (packet[0] != _RH_BROADCAST_ADDRESS)
+                        elif ((packet[3] & _RH_FLAGS_ACK) == 0) and (
+                            packet[0] != _RH_BROADCAST_ADDRESS
                         ):
                             # delay before sending Ack to give receiver a chance to get ready
                             if self.ack_delay is not None:
-                                time.sleep(self.ack_delay)
+                                await asyncio.sleep(self.ack_delay)
                             # send ACK packet to sender (data is b'!')
-                            self.send(
+                            await self.asyncio_send(
                                 b"!",
                                 destination=packet[1],
                                 node=packet[0],
@@ -442,6 +534,10 @@ class RFMSPI:
                             else:  # save the packet identifier for this source
                                 self.seen_ids[packet[1]] = packet[2]
                         if (
+                            packet is not None and (packet[3] & _RH_FLAGS_ACK) != 0
+                        ):  # Ignore it if it was an ACK packet
+                            packet = None
+                        if (
                             not with_header and packet is not None
                         ):  # skip the header if not wanted
                             packet = packet[4:]
@@ -453,3 +549,5 @@ class RFMSPI:
             self.idle()
         self.clear_interrupt()
         return packet
+
+    receive_with_ack = asyncio_to_blocking(asyncio_receive_with_ack)

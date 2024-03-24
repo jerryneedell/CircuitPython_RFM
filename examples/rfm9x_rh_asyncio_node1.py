@@ -7,6 +7,7 @@
 # CircuitPython does not support interrupts so it will not work on  Circutpython boards
 # Author: Tony DiCola, Jerry Needell
 import asyncio
+import time
 import board
 import busio
 import digitalio
@@ -27,12 +28,12 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # set delay before sending ACK
-rfm9x.ack_delay = 0.25
+# rfm9x.ack_delay = 0.25
 # set node addresses
-rfm9x.node = 2
-rfm9x.destination = 1
+rfm9x.node = 1
+rfm9x.destination = 2
 # send startup message from my_node
-# rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
 rfm9x.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -69,10 +70,15 @@ async def send_packets(packet_status):
     counter = 0
     ack_failed_counter = 0
     counter = 0
+    transmit_interval = 5
+    time_now = time.monotonic()
     while True:
         # If no packet was received during the timeout then None is returned.
         if packet_status.received:
             packet_status.received = False
+        if time.monotonic() - time_now > transmit_interval:
+            # reset timeer
+            time_now = time.monotonic()
             counter += 1
             # send a  mesage to destination_node from my_node
             if not await rfm9x.asyncio_send_with_ack(

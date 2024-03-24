@@ -37,7 +37,7 @@ ack_failed_counter = 0
 print("Waiting for packets...")
 while True:
     # Look for a new packet: only accept if addresses to my_node
-    packet = rfm9xfsk.receive(with_ack=True, with_header=True)
+    packet = rfm9xfsk.receive_with_ack(with_header=True)
     # If no packet was received during the timeout then None is returned.
     if packet is not None:
         # Received a packet!

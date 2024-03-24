@@ -26,13 +26,8 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
-# set delay before sending ACK
-rfm9x.ack_delay = 0.25
-# set node addresses
-rfm9x.node = 2
-rfm9x.destination = 1
 # send startup message from my_node
-# rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
 rfm9x.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -51,9 +46,7 @@ class Packet:
 async def wait_for_packets(packet_status):
     while True:
         if rfm9x.payload_ready():
-            packet = await rfm9x.asyncio_receive_with_ack(
-                with_header=True, timeout=None
-            )
+            packet = await rfm9x.asyncio_receive(with_header=True, timeout=None)
             if packet is not None:
                 packet_status.received = True
                 # Received a packet!
@@ -67,21 +60,19 @@ async def wait_for_packets(packet_status):
 async def send_packets(packet_status):
     # initialize counter
     counter = 0
-    ack_failed_counter = 0
-    counter = 0
     while True:
         # If no packet was received during the timeout then None is returned.
         if packet_status.received:
             packet_status.received = False
+            await asyncio.sleep(0.5)  # delay .5 seconds before responding
             counter += 1
             # send a  mesage to destination_node from my_node
-            if not await rfm9x.asyncio_send_with_ack(
+            await rfm9x.asyncio_send(
                 bytes(
                     "message from node node {} {}".format(rfm9x.node, counter), "UTF-8"
-                )
-            ):
-                ack_failed_counter += 1
-                print(" No Ack: ", counter, ack_failed_counter)
+                ),
+                keep_listening=True,
+            )
         await asyncio.sleep(0.001)
 
 
