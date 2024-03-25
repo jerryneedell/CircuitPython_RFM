@@ -27,7 +27,7 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # set delay before sending ACK
-rfm9x.ack_delay = 0.25
+# rfm9x.ack_delay = 0.25
 # set node addresses
 rfm9x.node = 2
 rfm9x.destination = 1
@@ -48,12 +48,15 @@ class Packet:
 
 
 # setup interrupt callback function
-async def wait_for_packets(packet_status):
+async def wait_for_packets(packet_status, lock):
     while True:
         if rfm9x.payload_ready():
-            packet = await rfm9x.asyncio_receive_with_ack(
-                with_header=True, timeout=None
-            )
+            if lock.locked():
+                print("locked waiting for receive")
+            async with lock:
+                packet = await rfm9x.asyncio_receive_with_ack(
+                    with_header=True, timeout=None
+                )
             if packet is not None:
                 packet_status.received = True
                 # Received a packet!
@@ -64,7 +67,7 @@ async def wait_for_packets(packet_status):
         await asyncio.sleep(0.001)
 
 
-async def send_packets(packet_status):
+async def send_packets(packet_status, lock):
     # initialize counter
     counter = 0
     ack_failed_counter = 0
@@ -75,20 +78,27 @@ async def send_packets(packet_status):
             packet_status.received = False
             counter += 1
             # send a  mesage to destination_node from my_node
-            if not await rfm9x.asyncio_send_with_ack(
-                bytes(
-                    "message from node node {} {}".format(rfm9x.node, counter), "UTF-8"
-                )
-            ):
-                ack_failed_counter += 1
-                print(" No Ack: ", counter, ack_failed_counter)
+            if lock.locked():
+                print("locked waiting for send")
+            async with lock:
+                if not await rfm9x.asyncio_send_with_ack(
+                    bytes(
+                        "message from node {} {} {}".format(
+                            rfm9x.node, counter, ack_failed_counter
+                        ),
+                        "UTF-8",
+                    )
+                ):
+                    ack_failed_counter += 1
+                    print(" No Ack: ", counter, ack_failed_counter)
         await asyncio.sleep(0.001)
 
 
 async def main():
     packet_status = Packet()
-    task1 = asyncio.create_task(wait_for_packets(packet_status))
-    task2 = asyncio.create_task(send_packets(packet_status))
+    lock = asyncio.Lock()
+    task1 = asyncio.create_task(wait_for_packets(packet_status, lock))
+    task2 = asyncio.create_task(send_packets(packet_status, lock))
 
     await asyncio.gather(task1, task2)  # Don't forget "await"!
 

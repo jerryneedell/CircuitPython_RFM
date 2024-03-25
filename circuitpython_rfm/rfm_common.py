@@ -279,7 +279,8 @@ class RFMSPI:
         """Send a string of data using the transmitter.
         You can only send 252 bytes at a time
         (limited by chip's FIFO size and appended headers).
-        This appends a 4 byte header to be compatible with the RadioHead library.
+        if the propert radiohead is True then this appends a 4 byte header
+        to be compatible with the RadioHead library.
         The header defaults to using the initialized attributes:
         (destination,node,identifier,flags)
         It may be temporarily overidden via the kwargs - destination,node,identifier,flags.
@@ -396,7 +397,7 @@ class RFMSPI:
         If keep_listening is True (the default) the chip will immediately enter listening mode
         after reception of a packet, otherwise it will fall back to idle mode and ignore any
         future reception.
-        All packets must have a 4-byte header for compatibility with the
+        Packets may have a 4-byte header for compatibility with the
         RadioHead library.
         The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
         the header before returning the packet to the caller.
@@ -461,19 +462,18 @@ class RFMSPI:
         with_header: bool = False,
         timeout: Optional[float] = None
     ) -> Optional[bytearray]:
-        """Wait to receive a packet from the receiver. If a packet is found the payload bytes
-        are returned, otherwise None is returned (which indicates the timeout elapsed with no
-        reception).
+        """Wait to receive a RadioHead packet from the receiver then send an ACK packet in response.
+        AKA Reliable Datagram mode.
+        If a packet is found the payload bytes are returned, otherwise None is returned
+        (which indicates the timeout elapsed with no reception).
         If keep_listening is True (the default) the chip will immediately enter listening mode
-        after reception of a packet, otherwise it will fall back to idle mode and ignore any
-        future reception.
-        All packets must have a 4-byte header for compatibility with the
-        RadioHead library.
+        after receipt of a packet, otherwise it will fall back to idle mode and ignore
+        any incomming packets until it is called again.
+        All packets must have a 4-byte header for compatibility with the  RadioHead library.
         The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
         the header before returning the packet to the caller.
         If with_header is True then the 4 byte header will be returned with the packet.
         The payload then begins at packet[4].
-        Send an ACK after receipt (Reliable Datagram mode)
         """
         if not self.radiohead:
             raise RuntimeError("receive_with_ack only supported for RadioHead mode")
