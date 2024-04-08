@@ -1,11 +1,6 @@
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-# Example using Interrupts to send a message and then wait indefinitely for messages
-# to be received. Interrupts are used only for receive. sending is done with polling.
-# This example is for systems that support interrupts like the Raspberry Pi with "blinka"
-# CircuitPython does not support interrupts so it will not work on  Circutpython boards
-# Author: Tony DiCola, Jerry Needell
 import asyncio
 import time
 import board
@@ -31,7 +26,7 @@ rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 rfm9x.ack_delay = 0.1
 # set node addresses
 rfm9x.node = 1
-rfm9x.destination = 2
+rfm9x.destination = 100
 # send startup message from my_node
 rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
 rfm9x.listen()
@@ -97,7 +92,7 @@ async def send_packets(packet_status, lock):
                 ):
                     ack_failed_counter += 1
                     print(" No Ack: ", counter, ack_failed_counter)
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0.1)
 
 
 async def main():
