@@ -15,8 +15,8 @@ RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
 # module! Can be a value like 915.0, 433.0, etc.
 
 # Define pins connected to the chip, use these if wiring up the breakout according to the guide:
-CS = digitalio.DigitalInOut(board.CE1)
-RESET = digitalio.DigitalInOut(board.D25)
+CS = digitalio.DigitalInOut(board.D10)
+RESET = digitalio.DigitalInOut(board.D11)
 
 # Initialize SPI bus.
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
@@ -26,13 +26,11 @@ rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 
 # set the time interval (seconds) for sending packets
-transmit_interval = 10
+transmit_interval = 5
 
-# set delay before sending ACK
-rfm9x.ack_delay = 0.1
 # set node addresses
 rfm9x.node = 1
-rfm9x.destination = 2
+rfm9x.destination = 100
 # initialize counter
 counter = 0
 ack_failed_counter = 0
@@ -60,7 +58,12 @@ while True:
         counter += 1
         # send a  mesage to destination_node from my_node
         if not rfm9x.send_with_ack(
-            bytes("message from node node {} {}".format(rfm9x.node, counter), "UTF-8")
+            bytes(
+                "message from node node {} {} {}".format(
+                    rfm9x.node, counter, ack_failed_counter
+                ),
+                "UTF-8",
+            )
         ):
             ack_failed_counter += 1
             print(" No Ack: ", counter, ack_failed_counter)

@@ -28,7 +28,7 @@ print("Frequency: {0}mhz".format(rfm9xfsk.frequency_mhz))
 print("Bit rate: {0}kbit/s".format(rfm9xfsk.bitrate / 1000))
 print("Frequency deviation: {0}hz".format(rfm9xfsk.frequency_deviation))
 
-# Send a packet.  Note you can only send a packet up to 60 bytes in length.
+# Send a packet.  Note you can only send a packet up to 252 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
 # call will wait for the previous one to finish before continuing.
@@ -36,7 +36,7 @@ rfm9xfsk.send(bytes("Hello world!\r\n", "utf-8"))
 print("Sent hello world message!")
 
 # Wait to receive packets.  Note that this library can't receive data at a fast
-# rate, in fact it can only receive and process one 60 byte packet at a time.
+# rate, in fact it can only receive and process one 252 byte packet at a time.
 # This means you should only use this for low bandwidth scenarios, like sending
 # and receiving a single message at a time.
 print("Waiting for packets...")
@@ -52,10 +52,7 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw bytes): {0}".format(packet))
-        # And decode to ASCII text and print it too.  Note that you always
-        # receive raw bytes and need to convert to a text format like ASCII
-        # if you intend to do string processing on your data.  Make sure the
-        # sending side is sending ASCII data before you try to decode!
+        # And decode to ASCII text or HEX if the ASCII decode fails
         try:
             packet_text = str(packet, "ascii")
             print("Received (ASCII): {0}".format(packet_text))

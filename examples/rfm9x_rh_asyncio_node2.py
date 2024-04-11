@@ -27,8 +27,6 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
-# set delay before sending ACK
-# rfm9x.ack_delay = 0.25
 # set node addresses
 rfm9x.node = 2
 rfm9x.destination = 100

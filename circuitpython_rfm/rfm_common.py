@@ -165,7 +165,7 @@ class RFMSPI:
            operating mode has been changed.
         """
         # initialize timeouts and delays delays
-        self.ack_wait = 0.5
+        self.ack_wait = 0.1
         """The delay time before attempting a retry after not receiving an ACK"""
         self.receive_timeout = 0.5
         """The amount of time to poll for a received packet.
