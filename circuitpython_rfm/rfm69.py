@@ -223,8 +223,10 @@ class RFM69(RFMSPI):
         self.reset()  # Reset the chip.
         # Check the version of the chip.
         version = self.read_u8(_RF69_REG_10_VERSION)
-        if version != 0x24:
-            raise RuntimeError("Invalid RFM69 version, check wiring!")
+        if version not in (0x23, 0x24):
+            raise RuntimeError(
+                "Invalid RFM69 version, check wiring! ID found:", hex(version)
+            )
         self.idle()  # Enter idle state.
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.

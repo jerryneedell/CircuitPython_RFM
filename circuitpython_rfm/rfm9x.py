@@ -33,6 +33,8 @@ except ImportError:
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/jerryneedell/CircuitPython_RFM.git"
 
+# pylint: disable=duplicate-code
+
 # Internal constants:
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
 _RF95_REG_00_FIFO = const(0x00)
@@ -212,7 +214,8 @@ class RFM9x(RFMSPI):
         version = self.read_u8(address=_RF95_REG_42_VERSION)
         if version != 18:
             raise RuntimeError(
-                "Failed to find rfm9x with expected version -- check wiring"
+                "Failed to find rfm9x with expected version -- check wiring. Version found:",
+                hex(version),
             )
 
         # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
