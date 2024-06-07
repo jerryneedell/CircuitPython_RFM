@@ -1,17 +1,12 @@
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-# Example using Interrupts to send a message and then wait indefinitely for messages
-# to be received. Interrupts are used only for receive. sending is done with polling.
-# This example is for systems that support interrupts like the Raspberry Pi with "blinka"
-# CircuitPython does not support interrupts so it will not work on  Circutpython boards
-# Author: Tony DiCola, Jerry Needell
 import asyncio
 import time
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9x
+from circuitpython_rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -25,13 +20,14 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm9x = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # set node addresses
-rfm9x.node = 2
+rfm9x.node = 1
 rfm9x.destination = 100
+rfm9x.ack_wait = 0.4
 # send startup message from my_node
-# rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
 rfm9x.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -95,7 +91,7 @@ async def send_packets(packet_status, lock):
                 ):
                     ack_failed_counter += 1
                     print(" No Ack: ", counter, ack_failed_counter)
-        await asyncio.sleep(0.001)
+        await asyncio.sleep(0.1)
 
 
 async def main():

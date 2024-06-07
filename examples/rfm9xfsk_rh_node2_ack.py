@@ -26,6 +26,7 @@ rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # set delay before transmitting ACK (seconds)
 rfm9xfsk.ack_delay = 0.1
+rfm9xfsk.ack_wait = 0.2
 # set node addresses
 rfm9xfsk.node = 2
 rfm9xfsk.destination = 1

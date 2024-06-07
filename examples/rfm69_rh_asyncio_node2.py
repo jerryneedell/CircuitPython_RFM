@@ -11,7 +11,7 @@ import time
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9x
+from circuitpython_rfm import rfm69
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -25,14 +25,15 @@ RESET = digitalio.DigitalInOut(board.D25)
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
 # Initialze RFM radio
-rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
+rfm69 = rfm69.RFM69(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # set node addresses
-rfm9x.node = 2
-rfm9x.destination = 100
+rfm69.node = 2
+rfm69.destination = 100
+rfm69.ack_wait = 0.4
 # send startup message from my_node
-# rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
-rfm9x.listen()
+# rfm69.send_with_ack(bytes("startup message from node {}".format(rfm69.node), "UTF-8"))
+rfm69.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
 # initialize flag and timer
@@ -49,11 +50,11 @@ class Packet:
 # setup interrupt callback function
 async def wait_for_packets(packet_status, lock):
     while True:
-        if rfm9x.payload_ready():
+        if rfm69.payload_ready():
             if lock.locked():
                 print("locked waiting for receive")
             async with lock:
-                packet = await rfm9x.asyncio_receive_with_ack(
+                packet = await rfm69.asyncio_receive_with_ack(
                     with_header=True, timeout=None
                 )
             if packet is not None:
@@ -62,7 +63,7 @@ async def wait_for_packets(packet_status, lock):
                 # Print out the raw bytes of the packet:
                 print("Received (raw bytes): {0}".format(packet))
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print("RSSI: {0}".format(rfm69.last_rssi))
         await asyncio.sleep(0.001)
 
 
@@ -85,10 +86,10 @@ async def send_packets(packet_status, lock):
             if lock.locked():
                 print("locked waiting for send")
             async with lock:
-                if not await rfm9x.asyncio_send_with_ack(
+                if not await rfm69.asyncio_send_with_ack(
                     bytes(
                         "message from node {} {} {}".format(
-                            rfm9x.node, counter, ack_failed_counter
+                            rfm69.node, counter, ack_failed_counter
                         ),
                         "UTF-8",
                     )
