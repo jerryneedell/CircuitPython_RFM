@@ -3,11 +3,11 @@
 
 # Example to display raw packets including header
 
-#
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm69
+
+from rfm import rfm69
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -29,9 +29,7 @@ transmit_interval = 10
 
 # Optionally set an encryption key (16 byte AES key). MUST match both
 # on the transmitter and receiver (or be set to None to disable/the default).
-rfm69.encryption_key = (
-    b"\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
-)
+rfm69.encryption_key = b"\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08"
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -44,6 +42,6 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:]])
-        print("Received (raw payload): {0}".format(packet[4:]))
-        print("RSSI: {0}".format(rfm69.last_rssi))
+        print(f"Received (raw payload): {packet[4:]}")
+        print(f"RSSI: {rfm69.last_rssi}")
         # send reading after any packet received

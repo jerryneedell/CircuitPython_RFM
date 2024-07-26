@@ -3,10 +3,12 @@
 
 import asyncio
 import time
+
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9x
+
+from rfm import rfm9x
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -26,7 +28,7 @@ rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 rfm9x.node = 1
 rfm9x.destination = 100
 # send startup message from my_node
-rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send_with_ack(bytes(f"startup message from node {rfm9x.node}", "UTF-8"))
 rfm9x.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -48,16 +50,14 @@ async def wait_for_packets(packet_status, lock):
             if lock.locked():
                 print("locked waiting for receive")
             async with lock:
-                packet = await rfm9x.asyncio_receive_with_ack(
-                    with_header=True, timeout=None
-                )
+                packet = await rfm9x.asyncio_receive_with_ack(with_header=True, timeout=None)
             if packet is not None:
                 packet_status.received = True
                 # Received a packet!
                 # Print out the raw bytes of the packet:
-                print("Received (raw bytes): {0}".format(packet))
+                print(f"Received (raw bytes): {packet}")
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print(f"RSSI: {rfm9x.last_rssi}")
         await asyncio.sleep(0.001)
 
 
@@ -82,9 +82,7 @@ async def send_packets(packet_status, lock):
             async with lock:
                 if not await rfm9x.asyncio_send_with_ack(
                     bytes(
-                        "message from node {} {} {}".format(
-                            rfm9x.node, counter, ack_failed_counter
-                        ),
+                        f"message from node {rfm9x.node} {counter} {ack_failed_counter}",
                         "UTF-8",
                     )
                 ):

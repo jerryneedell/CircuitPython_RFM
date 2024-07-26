@@ -7,7 +7,8 @@
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -34,5 +35,5 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:]])
-        print("RSSI: {0}".format(rfm9xfsk.last_rssi))
+        print(f"RSSI: {rfm9xfsk.last_rssi}")
         # send reading after any packet received

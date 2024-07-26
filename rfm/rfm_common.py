@@ -6,16 +6,19 @@
 
 * Author(s): Jerry Needell
 """
+
 import asyncio
-import time
 import random
+import time
+
 from adafruit_bus_device import spi_device
 
 try:
     from typing import Callable, Optional, Type
-    from circuitpython_typing import WriteableBuffer, ReadableBuffer
-    import digitalio
+
     import busio
+    import digitalio
+    from circuitpython_typing import ReadableBuffer, WriteableBuffer
 
 except ImportError:
     pass
@@ -71,9 +74,7 @@ def asyncio_to_blocking(function):
     return blocking_function
 
 
-async def asyncio_check_timeout(
-    flag: Callable, limit: float, timeout_poll: float
-) -> bool:
+async def asyncio_check_timeout(flag: Callable, limit: float, timeout_poll: float) -> bool:
     """test for timeout waiting for specified flag"""
     timed_out = False
     if HAS_SUPERVISOR:
@@ -142,7 +143,7 @@ class RFMSPI:
             obj.write_u8(self._address, reg_value)
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         spi: busio.SPI,
         cs_pin: digitalio.DigitalInOut,
@@ -222,9 +223,7 @@ class RFMSPI:
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
-    def read_into(
-        self, address: int, buf: WriteableBuffer, length: Optional[int] = None
-    ) -> None:
+    def read_into(self, address: int, buf: WriteableBuffer, length: Optional[int] = None) -> None:
         """Read a number of bytes from the specified address into the provided
         buffer.  If length is not specified (the default) the entire buffer
         will be filled."""
@@ -241,9 +240,7 @@ class RFMSPI:
         self.read_into(address, self._BUFFER, length=1)
         return self._BUFFER[0]
 
-    def write_from(
-        self, address: int, buf: ReadableBuffer, length: Optional[int] = None
-    ) -> None:
+    def write_from(self, address: int, buf: ReadableBuffer, length: Optional[int] = None) -> None:
         """Write a number of bytes to the provided address and taken from the
         provided buffer.  If no length is specified (the default) the entire
         buffer is written."""
@@ -259,14 +256,13 @@ class RFMSPI:
         """Write a byte register to the chip.  Specify the 7-bit address and the
         8-bit value to write to that address."""
         with self.spi_device as device:
-            self._BUFFER[0] = (
-                address | 0x80
-            ) & 0xFF  # Set top bit to 1 to indicate a write.
+            self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to indicate a write.
             self._BUFFER[1] = val & 0xFF
             device.write(self._BUFFER, end=2)
 
     # pylint: disable=too-many-branches
-    async def asyncio_send(
+
+    async def asyncio_send(  # noqa: PLR0912 PLR0913
         self,
         data: ReadableBuffer,
         *,
@@ -274,7 +270,7 @@ class RFMSPI:
         destination: Optional[int] = None,
         node: Optional[int] = None,
         identifier: Optional[int] = None,
-        flags: Optional[int] = None
+        flags: Optional[int] = None,
     ) -> bool:
         """Send a string of data using the transmitter.
         You can only send 252 bytes at a time
@@ -363,9 +359,7 @@ class RFMSPI:
                 got_ack = True
             else:
                 # wait for a packet from our destination
-                ack_packet = await self.asyncio_receive(
-                    timeout=self.ack_wait, with_header=True
-                )
+                ack_packet = await self.asyncio_receive(timeout=self.ack_wait, with_header=True)
                 if ack_packet is not None:
                     if ack_packet[3] & _RH_FLAGS_ACK:
                         # check the ID
@@ -389,7 +383,7 @@ class RFMSPI:
         *,
         keep_listening: bool = True,
         with_header: bool = False,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> Optional[bytearray]:
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned (which indicates the timeout elapsed with no
@@ -416,9 +410,7 @@ class RFMSPI:
             # interrupt supports.
             # Make sure we are listening for packets.
             self.listen()
-            timed_out = await asyncio_check_timeout(
-                self.payload_ready, timeout, self.timeout_poll
-            )
+            timed_out = await asyncio_check_timeout(self.payload_ready, timeout, self.timeout_poll)
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
@@ -435,14 +427,12 @@ class RFMSPI:
                 if self.radiohead:
                     if packet is not None:
                         if (
-                            self.node != _RH_BROADCAST_ADDRESS
+                            self.node != _RH_BROADCAST_ADDRESS  # noqa: PLR1714
                             and packet[0] != _RH_BROADCAST_ADDRESS
                             and packet[0] != self.node
                         ):
                             packet = None
-                        if (
-                            not with_header and packet is not None
-                        ):  # skip the header if not wanted
+                        if not with_header and packet is not None:  # skip the header if not wanted
                             packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:
@@ -455,12 +445,12 @@ class RFMSPI:
 
     receive = asyncio_to_blocking(asyncio_receive)
 
-    async def asyncio_receive_with_ack(
+    async def asyncio_receive_with_ack(  # noqa: PLR0912
         self,
         *,
         keep_listening: bool = True,
         with_header: bool = False,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> Optional[bytearray]:
         """Wait to receive a RadioHead packet from the receiver then send an ACK packet in response.
         AKA Reliable Datagram mode.
@@ -487,9 +477,7 @@ class RFMSPI:
             # interrupt supports.
             # Make sure we are listening for packets.
             self.listen()
-            timed_out = await asyncio_check_timeout(
-                self.payload_ready, timeout, self.timeout_poll
-            )
+            timed_out = await asyncio_check_timeout(self.payload_ready, timeout, self.timeout_poll)
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
@@ -506,7 +494,7 @@ class RFMSPI:
                 if self.radiohead:
                     if packet is not None:
                         if (
-                            self.node != _RH_BROADCAST_ADDRESS
+                            self.node != _RH_BROADCAST_ADDRESS  # noqa: PLR1714
                             and packet[0] != _RH_BROADCAST_ADDRESS
                             and packet[0] != self.node
                         ):
@@ -537,9 +525,7 @@ class RFMSPI:
                             packet is not None and (packet[3] & _RH_FLAGS_ACK) != 0
                         ):  # Ignore it if it was an ACK packet
                             packet = None
-                        if (
-                            not with_header and packet is not None
-                        ):  # skip the header if not wanted
+                        if not with_header and packet is not None:  # skip the header if not wanted
                             packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:

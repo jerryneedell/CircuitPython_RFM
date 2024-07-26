@@ -12,7 +12,7 @@ requires = [
 
 [project]
 name = "circuitpython-rfm"
-description = "support for RFM9x and RFM69 radio modules"
+description = "support for RFM9x and RFM69 modules"
 version = "0.0.0+auto.0"
 readme = "README.rst"
 authors = [
@@ -25,6 +25,7 @@ keywords = [
     "circuitpython",
     "micropython",
     "rfm",
+    "RFM69,RFM9x,LoRa,radio",
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -38,7 +39,10 @@ classifiers = [
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.setuptools]
-packages = ["circuitpython_rfm"]
+# TODO: IF LIBRARY FILES ARE A PACKAGE FOLDER,
+#       CHANGE `py_modules = ['...']` TO `packages = ['...']`
+#py-modules = ["rfm"]
+packages = ["rfm"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

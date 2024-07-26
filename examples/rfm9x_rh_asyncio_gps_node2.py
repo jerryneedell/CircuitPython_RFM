@@ -8,11 +8,13 @@
 # Author: Tony DiCola, Jerry Needell
 import asyncio
 import time
+
+import adafruit_gps
 import board
 import busio
 import digitalio
-import adafruit_gps
-from circuitpython_rfm import rfm9x
+
+from rfm import rfm9x
 
 uart = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
 
@@ -86,32 +88,16 @@ async def read_gps(packet_status, wait):
             # We have a fix! (gps.has_fix is true)
             # Print out details about the fix like location, date, etc.
             print("=" * 40)  # Print a separator line.
-            print(
-                "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
-                    gps.timestamp_utc.tm_mon,  # Grab parts of the time from the
-                    gps.timestamp_utc.tm_mday,  # struct_time object that holds
-                    gps.timestamp_utc.tm_year,  # the fix time.  Note you might
-                    gps.timestamp_utc.tm_hour,  # not get all data like year, day,
-                    gps.timestamp_utc.tm_min,  # month!
-                    gps.timestamp_utc.tm_sec,
-                )
-            )
-            packet_status.gps_time = "Fix timestamp: {}/{}/{} {:02}:{:02}:{:02}".format(
-                gps.timestamp_utc.tm_mon,
-                gps.timestamp_utc.tm_mday,
-                gps.timestamp_utc.tm_year,
-                gps.timestamp_utc.tm_hour,
-                gps.timestamp_utc.tm_min,
-                gps.timestamp_utc.tm_sec,
-            )
-            print("Latitude: {0:.6f} degrees".format(gps.latitude))
-            print("Longitude: {0:.6f} degrees".format(gps.longitude))
+            packet_status.gps_time = f"Fix timestamp: {gps.timestamp_utc.tm_mon}/{gps.timestamp_utc.tm_mday}/{gps.timestamp_utc.tm_year} {gps.timestamp_utc.tm_hour:02}:{gps.timestamp_utc.tm_min:02}:{gps.timestamp_utc.tm_sec:02}"  # noqa: E501
+            print(packet_status.gps_time)
+            print(f"Latitude: {gps.latitude:.6f} degrees")
+            print(f"Longitude: {gps.longitude:.6f} degrees")
             packet_status.gps_latitude = gps.latitude
             packet_status.gps_longitude = gps.longitude
             if gps.satellites is not None:
-                print("# satellites: {}".format(gps.satellites))
+                print(f"# satellites: {gps.satellites}")
             if gps.altitude_m is not None:
-                print("Altitude: {} meters".format(gps.altitude_m))
+                print(f"Altitude: {gps.altitude_m} meters")
         await asyncio.sleep(wait)
 
 
@@ -121,16 +107,14 @@ async def wait_for_packets(packet_status, lock):
             if lock.locked():
                 print("locked waiting for receive")
             async with lock:
-                packet = await rfm9x.asyncio_receive_with_ack(
-                    with_header=True, timeout=None
-                )
+                packet = await rfm9x.asyncio_receive_with_ack(with_header=True, timeout=None)
             if packet is not None:
                 packet_status.received = True
                 # Received a packet!
                 # Print out the raw bytes of the packet:
-                print("Received (raw bytes): {0}".format(packet))
+                print(f"Received (raw bytes): {packet}")
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print(f"RSSI: {rfm9x.last_rssi}")
         await asyncio.sleep(0.001)
 
 
@@ -155,14 +139,7 @@ async def send_packets(packet_status, lock):
             async with lock:
                 if not await rfm9x.asyncio_send_with_ack(
                     bytes(
-                        "message from node {} {} {} {} {:.6f} {:.6f}".format(
-                            rfm9x.node,
-                            counter,
-                            ack_failed_counter,
-                            packet_status.gps_time,
-                            packet_status.gps_latitude,
-                            packet_status.gps_longitude,
-                        ),
+                        f"message from node {rfm9x.node} {counter} {ack_failed_counter} {packet_status.gps_time} {packet_status.gps_latitude:.6f} {packet_status.gps_longitude:.6f}",  # noqa: E501
                         "UTF-8",
                     )
                 ):

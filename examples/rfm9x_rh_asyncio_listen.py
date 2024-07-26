@@ -7,10 +7,12 @@
 # CircuitPython does not support interrupts so it will not work on  Circutpython boards
 # Author: Tony DiCola, Jerry Needell
 import asyncio
+
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9x
+
+from rfm import rfm9x
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -51,9 +53,9 @@ async def wait_for_packets(packet_status):
                 packet_status.received = True
                 # Received a packet!
                 # Print out the raw bytes of the packet:
-                print("Received (raw bytes): {0}".format(packet))
+                print(f"Received (raw bytes): {packet}")
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print(f"RSSI: {rfm9x.last_rssi}")
         await asyncio.sleep(0.001)
 
 

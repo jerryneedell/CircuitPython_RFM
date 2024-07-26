@@ -7,10 +7,12 @@
 # CircuitPython does not support interrupts so it will not work on  Circutpython boards
 # Author: Tony DiCola, Jerry Needell
 import asyncio
+
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9x
+
+from rfm import rfm9x
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -27,7 +29,7 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9x = rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # send startup message from my_node
-rfm9x.send(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send(bytes(f"startup message from node {rfm9x.node}", "UTF-8"))
 rfm9x.listen()
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -51,9 +53,9 @@ async def wait_for_packets(packet_status):
                 packet_status.received = True
                 # Received a packet!
                 # Print out the raw bytes of the packet:
-                print("Received (raw bytes): {0}".format(packet))
+                print(f"Received (raw bytes): {packet}")
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print(f"RSSI: {rfm9x.last_rssi}")
         await asyncio.sleep(0.001)
 
 
@@ -68,9 +70,7 @@ async def send_packets(packet_status):
             counter += 1
             # send a  mesage to destination_node from my_node
             await rfm9x.asyncio_send(
-                bytes(
-                    "message from node node {} {}".format(rfm9x.node, counter), "UTF-8"
-                ),
+                bytes(f"message from node node {rfm9x.node} {counter}", "UTF-8"),
                 keep_listening=True,
             )
         await asyncio.sleep(0.001)

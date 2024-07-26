@@ -12,15 +12,16 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 
 * Author(s): Tony DiCola, Jerry Needell
 """
+
 import time
+
 from micropython import const
 
-from circuitpython_rfm.rfm_common import RFMSPI
-
+from rfm.rfm_common import RFMSPI
 
 try:
-    import digitalio
     import busio
+    import digitalio
 
     try:
         from typing import Literal
@@ -171,9 +172,7 @@ class RFM9x(RFMSPI):
 
     auto_agc = RFMSPI.RegisterBits(_RF95_REG_26_MODEM_CONFIG3, offset=2, bits=1)
 
-    low_datarate_optimize = RFMSPI.RegisterBits(
-        _RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1
-    )
+    low_datarate_optimize = RFMSPI.RegisterBits(_RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1)
 
     lna_boost_hf = RFMSPI.RegisterBits(_RF95_REG_0C_LNA, offset=0, bits=2)
 
@@ -183,7 +182,7 @@ class RFM9x(RFMSPI):
 
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         spi: busio.SPI,
         cs: digitalio.DigitalInOut,  # pylint: disable=invalid-name
@@ -194,7 +193,7 @@ class RFM9x(RFMSPI):
         high_power: bool = True,
         baudrate: int = 5000000,
         agc: bool = False,
-        crc: bool = True
+        crc: bool = True,
     ) -> None:
         super().__init__(spi, cs, baudrate=baudrate)
         self.module = "RFM9X"

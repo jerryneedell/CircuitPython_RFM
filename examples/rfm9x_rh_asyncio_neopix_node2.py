@@ -8,11 +8,13 @@
 # Author: Tony DiCola, Jerry Needell
 import asyncio
 import time
+
 import board
 import busio
 import digitalio
 import neopixel
-from circuitpython_rfm import rfm9x
+
+from rfm import rfm9x
 
 # On CircuitPlayground Express, and boards with built in status NeoPixel -> board.NEOPIXEL
 # Otherwise choose an open pin connected to the Data In of the NeoPixel strip, i.e. board.D1
@@ -106,16 +108,14 @@ async def wait_for_packets(packet_status, lock):
             if lock.locked():
                 print("locked waiting for receive")
             async with lock:
-                packet = await rfm9x.asyncio_receive_with_ack(
-                    with_header=True, timeout=None
-                )
+                packet = await rfm9x.asyncio_receive_with_ack(with_header=True, timeout=None)
             if packet is not None:
                 packet_status.received = True
                 # Received a packet!
                 # Print out the raw bytes of the packet:
-                print("Received (raw bytes): {0}".format(packet))
+                print(f"Received (raw bytes): {packet}")
                 print([hex(x) for x in packet])
-                print("RSSI: {0}".format(rfm9x.last_rssi))
+                print(f"RSSI: {rfm9x.last_rssi}")
         await asyncio.sleep(0.001)
 
 
@@ -140,9 +140,7 @@ async def send_packets(packet_status, lock):
             async with lock:
                 if not await rfm9x.asyncio_send_with_ack(
                     bytes(
-                        "message from node {} {} {}".format(
-                            rfm9x.node, counter, ack_failed_counter
-                        ),
+                        f"message from node {rfm9x.node} {counter} {ack_failed_counter}",
                         "UTF-8",
                     )
                 ):
@@ -156,9 +154,7 @@ async def main():
     lock = asyncio.Lock()
     task1 = asyncio.create_task(wait_for_packets(packet_status, lock))
     task2 = asyncio.create_task(send_packets(packet_status, lock))
-    task3 = asyncio.create_task(
-        rainbow_cycle(0.001, lock)
-    )  # rainbow cycle with 1ms delay per step
+    task3 = asyncio.create_task(rainbow_cycle(0.001, lock))  # rainbow cycle with 1ms delay per step
 
     await asyncio.gather(task1, task2, task3)  # Don't forget "await"!
 

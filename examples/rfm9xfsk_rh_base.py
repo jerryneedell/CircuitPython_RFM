@@ -4,7 +4,8 @@
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -26,7 +27,7 @@ rfm9x.destination = 0xFF
 rfm9x.ack_delay = 0.1
 # send startup message from my_node
 rfm9x.send(
-    bytes("startup message from base {}".format(rfm9x.node), "UTF-8"),
+    bytes(f"startup message from base {rfm9x.node}", "UTF-8"),
     keep_listening=True,
 )
 # Wait to receive packets.
@@ -40,6 +41,6 @@ while True:
         if packet is not None:
             # Received a packet!
             # Print out the raw bytes of the packet:
-            print("Received (raw bytes): {0}".format(packet))
+            print(f"Received (raw bytes): {packet}")
             print([hex(x) for x in packet])
-            print("RSSI: {0}".format(rfm9x.last_rssi))
+            print(f"RSSI: {rfm9x.last_rssi}")

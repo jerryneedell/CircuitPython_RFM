@@ -1,7 +1,7 @@
 Introduction
 ============
 
-THIS IS AN EARLY WORK IN PROGRESS - breaking changes may happen at any time.
+
 
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -14,11 +14,11 @@ THIS IS AN EARLY WORK IN PROGRESS - breaking changes may happen at any time.
     :alt: Build Status
 
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-    :alt: Code Style: Black
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+    :target: https://github.com/astral-sh/ruff
+    :alt: Code Style: Ruff
 
-support for RFM9x and RFM69 radio modules
+support for RFM9x and RFM69 modules
 
 
 Dependencies

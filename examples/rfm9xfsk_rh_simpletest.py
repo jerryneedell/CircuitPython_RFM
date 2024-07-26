@@ -6,7 +6,8 @@
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -23,10 +24,10 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9xfsk = rfm9xfsk.RFM9xFSK(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # Print out some chip state:
-print("Temperature: {0}C".format(rfm9xfsk.temperature))
-print("Frequency: {0}mhz".format(rfm9xfsk.frequency_mhz))
-print("Bit rate: {0}kbit/s".format(rfm9xfsk.bitrate / 1000))
-print("Frequency deviation: {0}hz".format(rfm9xfsk.frequency_deviation))
+print(f"Temperature: {rfm9xfsk.temperature}C")
+print(f"Frequency: {rfm9xfsk.frequency_mhz}mhz")
+print(f"Bit rate: {rfm9xfsk.bitrate / 1000}kbit/s")
+print(f"Frequency deviation: {rfm9xfsk.frequency_deviation}hz")
 
 # Send a packet.  Note you can only send a packet up to 252 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
@@ -51,12 +52,12 @@ while True:
     else:
         # Received a packet!
         # Print out the raw bytes of the packet:
-        print("Received (raw bytes): {0}".format(packet))
+        print(f"Received (raw bytes): {packet}")
         # And decode to ASCII text or HEX if the ASCII decode fails
         try:
             packet_text = str(packet, "ascii")
-            print("Received (ASCII): {0}".format(packet_text))
+            print(f"Received (ASCII): {packet_text}")
         except UnicodeDecodeError:
             print("Hex data: ", [hex(x) for x in packet])
         rssi = rfm9xfsk.last_rssi
-        print("Received signal strength: {0} dB".format(rssi))
+        print(f"Received signal strength: {rssi} dB")

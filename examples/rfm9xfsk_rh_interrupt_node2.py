@@ -10,12 +10,13 @@ import board
 import busio
 import digitalio
 import RPi.GPIO as io
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 
 # setup interrupt callback function
 def rfm9x_callback(rfm9x_irq):
-    global packet_received  # pylint: disable=global-statement
+    global packet_received  # noqa: PLW0603
     print("OP MODE: ", hex(rfm9x.read_u8(0x01)))
     print("IRQ FLAGS 2: ", hex(rfm9x.read_u8(0x3F)))
     print("IRQ detected ", rfm9x_irq, rfm9x.packet_sent(), rfm9x.payload_ready())
@@ -26,9 +27,9 @@ def rfm9x_callback(rfm9x_irq):
             packet_received = True
             # Received a packet!
             # Print out the raw bytes of the packet:
-            print("Received (raw bytes): {0}".format(packet))
+            print(f"Received (raw bytes): {packet}")
             print([hex(x) for x in packet])
-            print("RSSI: {0}".format(rfm9x.last_rssi))
+            print(f"RSSI: {rfm9x.last_rssi}")
 
 
 # Define radio parameters.
@@ -71,7 +72,7 @@ counter = 0
 ack_failed_counter = 0
 rfm9x.listen()
 # send startup message from my_node
-rfm9x.send_with_ack(bytes("startup message from node {}".format(rfm9x.node), "UTF-8"))
+rfm9x.send_with_ack(bytes(f"startup message from node {rfm9x.node}", "UTF-8"))
 # Wait to receive packets.
 print("Waiting for packets...")
 # initialize flag and timer
@@ -82,7 +83,7 @@ while True:
         counter += 1
         # send a  mesage to destination_node from my_node
         if not rfm9x.send_with_ack(
-            bytes("message from node node {} {}".format(rfm9x.node, counter), "UTF-8")
+            bytes(f"message from node node {rfm9x.node} {counter}", "UTF-8")
         ):
             ack_failed_counter += 1
             print(" No Ack: ", counter, ack_failed_counter)

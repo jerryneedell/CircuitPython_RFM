@@ -18,11 +18,12 @@ receiving of packets with RFM69 series radios (433/915Mhz).
 
 * Author(s): Tony DiCola, Jerry Needell
 """
+
 import time
+
 from micropython import const
 
-from circuitpython_rfm.rfm_common import RFMSPI
-from circuitpython_rfm.rfm_common import ticks_diff
+from rfm.rfm_common import RFMSPI, ticks_diff
 
 HAS_SUPERVISOR = False
 
@@ -37,8 +38,9 @@ except ImportError:
 
 try:
     from typing import Optional
-    import digitalio
+
     import busio
+    import digitalio
 
 except ImportError:
     pass
@@ -181,34 +183,30 @@ class RFM69(RFMSPI):
     packet_format = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=7, bits=1)
     dc_free = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=5, bits=2)
     crc_on = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=4, bits=1)
-    crc_auto_clear_off = RFMSPI.RegisterBits(
-        _RF69_REG_37_PACKET_CONFIG1, offset=3, bits=1
-    )
+    crc_auto_clear_off = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=3, bits=1)
     address_filter = RFMSPI.RegisterBits(_RF69_REG_37_PACKET_CONFIG1, offset=1, bits=2)
     mode_ready = RFMSPI.RegisterBits(_RF69_REG_27_IRQ_FLAGS1, offset=7)
     dio_0_mapping = RFMSPI.RegisterBits(_RF69_REG_25_DIO_MAPPING1, offset=6, bits=2)
     ook_thresh_type = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=6, bits=2)
     ook_thresh_step = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=5, bits=3)
     ook_peak_thresh_dec = RFMSPI.RegisterBits(_RF69_REG_1B_OOK_PEAK, offset=0, bits=3)
-    ook_average_thresh_filt = RFMSPI.RegisterBits(
-        _RF69_REG_1C_OOK_AVG, offset=6, bits=2
-    )
+    ook_average_thresh_filt = RFMSPI.RegisterBits(_RF69_REG_1C_OOK_AVG, offset=6, bits=2)
 
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-arguments
-    def __init__(  # pylint: disable=invalid-name
+    def __init__(  # noqa: PLR0913
         self,
         spi: busio.SPI,
         cs: digitalio.DigitalInOut,
         rst: digitalio.DigitalInOut,
         frequency: int,
         *,
-        sync_word: bytes = b"\x2D\xD4",
+        sync_word: bytes = b"\x2d\xd4",
         preamble_length: int = 4,
         encryption_key: Optional[bytes] = None,
         high_power: bool = True,
         baudrate: int = 2000000,
-        crc: bool = True
+        crc: bool = True,
     ) -> None:
         super().__init__(spi, cs, baudrate=baudrate)
 
@@ -224,9 +222,7 @@ class RFM69(RFMSPI):
         # Check the version of the chip.
         version = self.read_u8(_RF69_REG_10_VERSION)
         if version not in (0x23, 0x24):
-            raise RuntimeError(
-                "Invalid RFM69 version, check wiring! ID found:", hex(version)
-            )
+            raise RuntimeError("Invalid RFM69 version, check wiring! ID found:", hex(version))
         self.idle()  # Enter idle state.
         # Setup the chip in a similar way to the RadioHead RFM69 library.
         # Set FIFO TX condition to not empty and the default FIFO threshold to 15.

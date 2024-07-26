@@ -4,10 +4,12 @@
 # Example to receive addressed packed with ACK and send a response
 
 import time
+
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -44,14 +46,14 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:4]])
-        print("Received (raw payload): {0}".format(packet[4:]))
-        print("RSSI: {0}".format(rfm9xfsk.last_rssi))
+        print(f"Received (raw payload): {packet[4:]}")
+        print(f"RSSI: {rfm9xfsk.last_rssi}")
         # send response 2 sec after any packet received
         time.sleep(2)
         counter += 1
         # send a  mesage to destination_node from my_node
         if not rfm9xfsk.send_with_ack(
-            bytes("response from node {} {}".format(rfm9xfsk.node, counter), "UTF-8")
+            bytes(f"response from node {rfm9xfsk.node} {counter}", "UTF-8")
         ):
             ack_failed_counter += 1
             print(" No Ack: ", counter, ack_failed_counter)

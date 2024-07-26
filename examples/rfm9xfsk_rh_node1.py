@@ -5,10 +5,12 @@
 # Author: Jerry Needell
 #
 import time
+
 import board
 import busio
 import digitalio
-from circuitpython_rfm import rfm9xfsk
+
+from rfm import rfm9xfsk
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
@@ -42,7 +44,7 @@ rfm9xfsk.destination = 2
 # initialize counter
 counter = 0
 # send a broadcast mesage
-rfm9xfsk.send(b"\2" + bytes("message number {}".format(counter), "UTF-8"))
+rfm9xfsk.send(b"\2" + bytes(f"message number {counter}", "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -55,10 +57,10 @@ while True:
     if packet is not None:
         # Received a packet!
         # Print out the raw bytes of the packet:
-        print("Received (raw bytes): {0}".format(packet))
+        print(f"Received (raw bytes): {packet}")
         # send reading after any packet received
     if time.monotonic() - time_now > transmit_interval:
         # reset timeer
         time_now = time.monotonic()
         counter = counter + 1
-        rfm9xfsk.send(bytes("message number {}".format(counter), "UTF-8"))
+        rfm9xfsk.send(bytes(f"message number {counter}", "UTF-8"))
