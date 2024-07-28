@@ -19,6 +19,8 @@ Introduction
     :alt: Code Style: Ruff
 
 support for RFM9x and RFM69 modules
+CAUTION: THis library is a "Work In Progress", Breaking changes may be made at any time.
+
 
 
 Dependencies
