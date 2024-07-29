@@ -18,9 +18,16 @@ Introduction
     :target: https://github.com/astral-sh/ruff
     :alt: Code Style: Ruff
 
-support for RFM9x and RFM69 modules
-CAUTION: THis library is a "Work In Progress", Breaking changes may be made at any time.
+CAUTION: This library is a "Work In Progress", Breaking changes may be made at any time.
+CircuitPython support for RFM9x (LoRa,FSK/OOK) and RFM69 (FSK/OOK)  modules.
+With FSK/OOK RFM9x and RFM69 modules may communicate with eachother.
+LoRa is only supported on the RFM9x.
 
+The default configuration is compatible with the Arduino RadioHead library and incorparates the required 4 byte RadioHead Header.
+THe header amy be optionally disabled for transmission of "raw" packets for compatibility with other libraries such as RadioLib.
+
+The library uses aysncio internally so it must be installed. The user code does not have to use asyncio, but it is still used internally.
+Examples with and without asyncio are provided.
 
 
 Dependencies
